@@ -35,8 +35,8 @@ export const PRESETS: Record<Expression, Weights> = {
   neutral: {},
   happy: { accentPerk: 0.6, ...sym('mouthSmile', 1), ...sym('eyeSquint', 0.7), jawOpen: 0.3, ...sym('browOuterUp', 0.2) },
   sad: { accentDroop: 1, browInnerUp: 1, ...sym('mouthFrown', 1), ...sym('eyeBlink', 0.35), mouthPress: 0.3 },
-  angry: { ...sym('browDown', 1), mouthPress: 1, ...sym('mouthFrown', 0.35), ...sym('eyeBlink', 0.12), noseSneer: 0.25 },
-  surprised: { accentPerk: 1, browInnerUp: 1, ...sym('browOuterUp', 1), ...sym('eyeWide', 1), jawOpen: 0.85, mouthPucker: 0.55 },
+  angry: { ...sym('browDown', 1), mouthPress: 1, ...sym('mouthFrown', 0.9), ...sym('eyeBlink', 0.12), noseSneer: 0.25 },
+  surprised: { accentPerk: 1, browInnerUp: 1, ...sym('browOuterUp', 1), ...sym('eyeWide', 1), jawOpen: 0.7, mouthPucker: 1 },
   scared: { accentDroop: 0.5, browInnerUp: 1, ...sym('browOuterUp', 0.45), ...sym('eyeWide', 1), ...sym('mouthStretch', 1), jawOpen: 0.3, ...sym('mouthFrown', 0.3) },
   disgusted: { noseSneer: 1, mouthUpperUp: 1, ...sym('browDown', 0.5), ...sym('eyeSquint', 0.5), ...sym('mouthFrown', 0.45) },
 }

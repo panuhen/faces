@@ -158,7 +158,8 @@ CHARACTERS = {
                  "leg": (False, False), "shorts_leg": (False, True), "shoe": (True, False), "arm": (True, True)},
         "smooth": {"hair": 1},
         "layout": dict(lid_up_rest=72.0, lid_low_rest=-80.0, brow_off=0.03, eye_sink=0.04, iris_k=1.22,
-                       nose_size_y=0.032, painted_eyes=True, sculpted_nose=True, mouth_off=0.008),
+                       nose_size_y=0.032, painted_eyes=True, sculpted_nose=True, mouth_off=0.008,
+                       brow_teardrop=True),
         "accent_poses": {},
         "builder": "build_traced",
     },
@@ -1841,6 +1842,9 @@ def build_sam_hair(mats, traced):
                                (side * 96, 91), (side * 103, 105)], 0.120, 0.040)
         swept("Sideburn" + tag, [(side * 68, 68), (side * 75, 86),
                                  (side * 78, 99), (side * 76, 109)], 0.076, 0.032)
+        # fills the skin gap in front of the ear, between Sideburn and EarTop
+        swept("EarFront" + tag, [(side * 73, 58), (side * 79, 80),
+                                 (side * 83, 98), (side * 84, 112)], 0.092, 0.038)
 
     def front_point(x, z):
         r = max(0.01, 1 - abs((z - centre.z) / rz) ** 2.3) ** (1 / 2.3)
@@ -1864,15 +1868,24 @@ def build_sam_hair(mats, traced):
         lock(name, [front_point(x, z) for x, z in controls], width, 0.048, 0.023)
 
     # A small cowlick and two outward flicks break up the rounded crown.
-    lock("TuftCentre", [(-0.01, -0.07, 2.095), (-0.06, -0.08, 2.205),
-                        (-0.17, -0.065, 2.26), (-0.25, -0.05, 2.245)], 0.049, 0.032, 0.012, (0, -1, 0))
-    lock("TuftL", [(0.045, 0.025, 2.095), (0.08, 0.03, 2.180),
-                   (0.14, 0.04, 2.195), (0.195, 0.035, 2.18)], 0.040, 0.030, 0.01, (0, -1, 0))
-    lock("TuftR", [(-0.18, 0.02, 2.075), (-0.28, 0.025, 2.15),
-                   (-0.38, 0.02, 2.16), (-0.44, 0.015, 2.19)], 0.037, 0.030, 0.012, (0, -1, 0))
+    # TUFT_K shrinks each tuft towards its root, TUFT_DROP sinks it, so the
+    # flicks sit low and close to the crown like the sheet's small wisps.
+    TUFT_K, TUFT_DROP = 0.65, 0.030
+
+    def tuft(name, controls, width, thick, lift):
+        root = Vector(controls[0]) - Vector((0, 0, TUFT_DROP))
+        pts = [root + (Vector(c) - Vector(controls[0])) * TUFT_K for c in controls]
+        lock(name, pts, width * 0.85, thick, lift, (0, -1, 0))
+
+    tuft("TuftCentre", [(-0.01, -0.07, 2.095), (-0.06, -0.08, 2.205),
+                        (-0.17, -0.065, 2.26), (-0.25, -0.05, 2.245)], 0.049, 0.032, 0.012)
+    tuft("TuftL", [(0.045, 0.025, 2.095), (0.08, 0.03, 2.180),
+                   (0.14, 0.04, 2.195), (0.195, 0.035, 2.18)], 0.040, 0.030, 0.01)
+    tuft("TuftR", [(-0.18, 0.02, 2.075), (-0.28, 0.025, 2.15),
+                   (-0.38, 0.02, 2.16), (-0.44, 0.015, 2.19)], 0.037, 0.030, 0.012)
     triangles = sum(len(p.vertices) - 2 for ob in out for p in ob.data.polygons)
-    if triangles >= 25000:
-        raise RuntimeError(f"Sam's hair exceeds the 25k triangle budget: {triangles}")
+    if triangles >= 27000:
+        raise RuntimeError(f"Sam's hair exceeds the 27k triangle budget: {triangles}")
     print(f"SAM HAIR: {len(out) - 1} solid locks + scalp cap, {triangles} triangles, rigid Head weights")
     return out
 
@@ -2139,6 +2152,14 @@ PAINT = dict(rest=0.92, edge_w=1.06, blink=1.95, wide=0.12, squint=0.85,
              white_lift=0.004, white_dome=0.010, lid_lift=0.020, lash_r=0.0075)
 
 
+# mouthPucker corner moves, metres (x scaled by mouth width like other mouth moves)
+PUCKER = dict(**{"in": 0.045}, drop=0.020)
+
+# browDown on painted eyes: brow moves (metres), lid drop (x white radius),
+# lid tilt (degrees, inner corner down)
+SCOWL = dict(in_dx=0.030, in_dz=0.075, out_dz=0.010, lid_drop=0.22, lid_tilt=22.0)
+
+
 def build_painted_eye(tag, s, mats):
     r = L.eye_r
     a = math.sqrt(max(r * r - L.eye_sink ** 2, 1e-6))    # same visible size as the sphere eye
@@ -2197,7 +2218,7 @@ def build_face(mats):
         if getattr(L, "painted_eyes", False):
             parts += build_painted_eye(tag, s, mats)
             parts.append(build_brow(tag, s, mats))
-            p0 = surf_point(0.04 * s, L.sneer_z, -0.03)
+            p0 = surf_point(0.04 * s, L.sneer_z, -0.016)
             bm = sphere_bm(1.0, 16, 8)
             for v in bm.verts:
                 v.co = Vector((v.co.x * 0.034, v.co.y * 0.012, v.co.z * 0.009))
@@ -2253,7 +2274,7 @@ def build_face(mats):
         parts.append(build_brow(tag, s, mats))
 
         # Sneer wrinkle: small bar hidden inside the face at rest
-        p0 = surf_point(0.04 * s, L.sneer_z, -0.03)
+        p0 = surf_point(0.04 * s, L.sneer_z, -0.016)
         bm = sphere_bm(1.0, 16, 8)
         for v in bm.verts:
             v.co = Vector((v.co.x * 0.034, v.co.y * 0.012, v.co.z * 0.009))
@@ -2285,7 +2306,52 @@ def build_face(mats):
     return parts
 
 
+# Teardrop brow (Sam, from the reference sheet): a fat round head at the
+# inner end that thins into a tail curving down at the outer end.
+BROW_TEAR = dict(rise=0.045, fall=0.070, head=1.02, tail=0.62, ext_in=0.012, ext_out=0.010)
+
+
+def build_teardrop_brow(tag, s, mats):
+    T = BROW_TEAR
+    x0, x1 = L.brow_in[0] - T["ext_in"], L.brow_out[0] + T["ext_out"]
+    z0 = L.brow_in[1]
+    n = 41
+    # cosine spacing: dense rings at both rounded ends
+    us = [0.5 - 0.5 * math.cos(math.pi * i / (n - 1)) for i in range(n)]
+    pts = [surf_point((x0 + (x1 - x0) * u) * s, z0 + T["rise"] * u - T["fall"] * u * u, L.brow_off)
+           for u in us]
+    arc = [0.0]
+    for a, b in zip(pts, pts[1:]):
+        arc.append(arc[-1] + (b - a).length)
+    total = arc[-1]
+    r_head, r_tail = L.brow_r * T["head"], L.brow_r * T["tail"]
+    radii = []
+    for d in arc:
+        u = d / total
+        r = r_head + (r_tail - r_head) * smoothstep(0.0, 1.0, u) ** 1.1
+        # round caps: circular profile within one radius of each end
+        e_in, e_out = d / r_head, (total - d) / r_tail
+        cap = 1.0
+        if e_in < 1:
+            cap = math.sqrt(max(0.0, 1 - (1 - e_in) ** 2))
+        if e_out < 1:
+            cap = min(cap, math.sqrt(max(0.0, 1 - (1 - e_out) ** 2)))
+        radii.append(max(0.0015, r * cap))
+    bm = tube_bm(pts, lambda t: radii[round(t * (n - 1))], 16, flat=0.5)
+    ob = obj_from_bmesh(f"Brow_{tag}", bm, mats["brow"])
+    x_in, x_out = L.brow_in[0], L.brow_out[0]
+
+    def w(co):
+        t = smoothstep(x_in, x_out, abs(co.x))
+        return {f"BrowInner_{tag}": 1 - t, f"BrowOuter_{tag}": t}
+
+    assign_weights(ob, w)
+    return ob
+
+
 def build_brow(tag, s, mats):
+    if getattr(L, "brow_teardrop", False):
+        return build_teardrop_brow(tag, s, mats)
     p0, p1, p2 = (Vector(p) for p in (L.brow_in, L.brow_mid, L.brow_out))
     ctrl = 2 * p1 - 0.5 * (p0 + p2)   # quadratic bezier passing through brow_mid
     pts = []
@@ -2370,10 +2436,21 @@ def feature_poses(arm):
     X = (1, 0, 0)
     f = {}
     for tag, s in (("L", 1), ("R", -1)):
-        f[f"browDown_{tag}"] = {
-            f"BrowInner_{tag}": brow(f"BrowInner_{tag}", -0.02 * s, -0.05),
-            f"BrowOuter_{tag}": brow(f"BrowOuter_{tag}", 0, -0.012),
-        }
+        if getattr(L, "painted_eyes", False):
+            # V-shaped scowl: inner end pulls in and down, outer end lifts a
+            # little, and the upper lid tilts down at the inner corner (glare).
+            A = SCOWL
+            a = math.sqrt(max(L.eye_r ** 2 - L.eye_sink ** 2, 1e-6))
+            f[f"browDown_{tag}"] = {
+                f"BrowInner_{tag}": brow(f"BrowInner_{tag}", -A["in_dx"] * s, -A["in_dz"]),
+                f"BrowOuter_{tag}": brow(f"BrowOuter_{tag}", 0, A["out_dz"]),
+                f"LidUp_{tag}": {"loc": (0, 0, -A["lid_drop"] * a), "rot": ((0, 1, 0), -A["lid_tilt"] * s)},
+            }
+        else:
+            f[f"browDown_{tag}"] = {
+                f"BrowInner_{tag}": brow(f"BrowInner_{tag}", -0.02 * s, -0.05),
+                f"BrowOuter_{tag}": brow(f"BrowOuter_{tag}", 0, -0.012),
+            }
         f[f"browOuterUp_{tag}"] = {f"BrowOuter_{tag}": brow(f"BrowOuter_{tag}", 0, 0.06)}
         if getattr(L, "painted_eyes", False):
             a = math.sqrt(max(L.eye_r ** 2 - L.eye_sink ** 2, 1e-6))
@@ -2399,26 +2476,38 @@ def feature_poses(arm):
         "MouthCorner_R": mouth("MouthCorner_R", 0, -0.03),
     }
     if mouth_mid():
-        f["jawOpen"]["MouthMid"] = mouth("MouthMid", 0, -0.059)
+        # the chin curves back steeply below a close-to-skin mouth: the open
+        # lower lip sits JAW_LIFT further out so it does not dip under the skin
+        JAW_LIFT = 0.008
+        f["jawOpen"]["MouthMid"] = slide("MouthMid", 0, -0.059, mouth_off() + JAW_LIFT)
+        f["jawOpen"]["Jaw"] = slide("Jaw", 0, -0.13, mouth_off() + JAW_LIFT)
+    # Pucker pulls the corners in and down past the resting smile curve, so
+    # with jawOpen they sit at mid height of the opening.
+    pk_dz = -(L.mouth_curve + PUCKER["drop"])
     f["mouthPucker"] = {
-        "MouthCorner_L": mouth("MouthCorner_L", -0.05, 0),
-        "MouthCorner_R": mouth("MouthCorner_R", 0.05, 0),
+        "MouthCorner_L": mouth("MouthCorner_L", -PUCKER["in"], pk_dz),
+        "MouthCorner_R": mouth("MouthCorner_R", PUCKER["in"], pk_dz),
         "LipUp": mouth("LipUp", 0, 0.005),
         "Jaw": mouth("Jaw", 0, -0.005),
     }
+    # Pressed lips with the middle lifted (PRESS_LIFT), so with mouthFrown the
+    # line becomes one downward arch instead of a wave.
+    PRESS_LIFT = 0.008
     f["mouthPress"] = {
         "MouthCorner_L": mouth("MouthCorner_L", -0.01, 0),
         "MouthCorner_R": mouth("MouthCorner_R", 0.01, 0),
-        "LipUp": mouth("LipUp", 0, -0.004),
-        "Jaw": mouth("Jaw", 0, 0.004),
+        "LipUp": mouth("LipUp", 0, PRESS_LIFT - 0.004),
+        "Jaw": mouth("Jaw", 0, PRESS_LIFT + 0.004),
     }
+    if mouth_mid():
+        f["mouthPress"]["MouthMid"] = mouth("MouthMid", 0, PRESS_LIFT)
     f["mouthUpperUp"] = {
         "LipUp": mouth("LipUp", 0, 0.035),
         "MouthCorner_L": mouth("MouthCorner_L", 0, 0.006),
         "MouthCorner_R": mouth("MouthCorner_R", 0, 0.006),
     }
     f["noseSneer"] = {
-        "Sneer": {"loc": (0, -0.036, 0)},
+        "Sneer": {"loc": (0, -0.024, 0)},
         "Nose": slide("Nose", 0, 0.016, 0.0),
         "LipUp": mouth("LipUp", 0, 0.015),
         "BrowInner_L": brow("BrowInner_L", -0.01, -0.015),

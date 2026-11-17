@@ -17,11 +17,15 @@ export function Gallery({ character }: { character: string }) {
   const tuneRef = useRef<HTMLCanvasElement>(null)
   const grid = useRef<CharacterStage | null>(null)
   const tune = useRef<CharacterStage | null>(null)
-  const [style, setStyle] = useState<FaceStyle>('big')
-  // ?pose=sad starts the big view in that expression (for close-up checks)
+  // ?style=subtle starts in that face style
+  const [style, setStyle] = useState<FaceStyle>(() => {
+    const s = new URLSearchParams(window.location.search).get('style')
+    return s && s in FACE_STYLES ? (s as FaceStyle) : 'big'
+  })
+  // ?pose=sad starts the big view in that expression (for close-up checks), scaled by ?style=
   const [manual, setManual] = useState<Weights>(() => {
     const pose = new URLSearchParams(window.location.search).get('pose') as Expression | null
-    return pose && pose in PRESETS ? { ...PRESETS[pose] } : {}
+    return pose && pose in PRESETS ? scaled(PRESETS[pose], FACE_STYLES[style]) : {}
   })
   const [ready, setReady] = useState(false)
   // degrees, turns the big view around the vertical axis (drag, slider, or ?yaw=)
