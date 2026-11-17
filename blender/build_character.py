@@ -41,6 +41,18 @@ REF_MOUTH_HALF_W = 0.095
 MOUTH_OFF = 0.022
 
 
+def mouth_mid():
+    """Characters whose mouth sits close to the skin get a middle bone, so an
+    open mouth follows the curve of the chin instead of cutting through it."""
+    return hasattr(L, "mouth_off")
+
+
+def mouth_off():
+    """How far the mouth sits off the skin: painted-face characters keep it
+    almost on the surface, so it does not float from the side."""
+    return getattr(L, "mouth_off", MOUTH_OFF)
+
+
 # --------------------------------------------------------------------------
 # Character definitions
 # --------------------------------------------------------------------------
@@ -127,6 +139,10 @@ CHARACTERS = {
         "arm_line": {"from": 0.74, "to": 0.68, "top": 0.93},
         # broad, flat face front so the big eyes sit inside the head outline
         "loft_p": {"head": 3.0},
+        "loft_n": {"head": 200},          # dense enough to sculpt the nose into
+        # Nose button sculpted into the head (part of the side profile, like the
+        # reference sheet): height, half width, half height, metres
+        "nose_bump": dict(h=0.046, sx=0.052, sz=0.048),
         # Side profile of the bald skull (the sketch's side view is mostly hair):
         # depth follows a rounded superellipse over the head's height, so the jaw
         # and chin curve back into the neck. Front-view widths stay as traced.
@@ -142,7 +158,7 @@ CHARACTERS = {
                  "leg": (False, False), "shorts_leg": (False, True), "shoe": (True, False), "arm": (True, True)},
         "smooth": {"hair": 1},
         "layout": dict(lid_up_rest=72.0, lid_low_rest=-80.0, brow_off=0.03, eye_sink=0.04, iris_k=1.22,
-                       nose_size_y=0.032, painted_eyes=True),
+                       nose_size_y=0.032, painted_eyes=True, sculpted_nose=True, mouth_off=0.008),
         "accent_poses": {},
         "builder": "build_traced",
     },
@@ -387,9 +403,11 @@ def build_armature():
         face_bone(f"LidLow_{tag}", ec)
         face_bone(f"BrowInner_{tag}", surf_point(L.brow_in[0] * s, L.brow_in[1], L.brow_off))
         face_bone(f"BrowOuter_{tag}", surf_point(L.brow_out[0] * s, L.brow_out[1], L.brow_off))
-        face_bone(f"MouthCorner_{tag}", surf_point(L.mouth_half_w * s, L.mouth_z + L.mouth_curve, MOUTH_OFF))
-    face_bone("LipUp", surf_point(0, L.mouth_z, MOUTH_OFF))
-    face_bone("Jaw", surf_point(0, L.mouth_z, MOUTH_OFF))
+        face_bone(f"MouthCorner_{tag}", surf_point(L.mouth_half_w * s, L.mouth_z + L.mouth_curve, mouth_off()))
+    face_bone("LipUp", surf_point(0, L.mouth_z, mouth_off()))
+    face_bone("Jaw", surf_point(0, L.mouth_z, mouth_off()))
+    if mouth_mid():
+        face_bone("MouthMid", surf_point(0, L.mouth_z, mouth_off()))
     face_bone("Sneer", surf_point(0, L.sneer_z, 0.0))
     face_bone("Nose", surf_point(0, L.nose_z, 0.0))
     for name, ah, at in L.accent_bones:
@@ -1876,6 +1894,34 @@ def sam_details(mats, traced):
     return out
 
 
+def nose_weight(co):
+    """0..1: how much a point near the nose follows the Nose bone."""
+    nb = CFG.get("nose_bump")
+    if not nb:
+        return 0.0
+    r2 = (co.x / nb["sx"]) ** 2 + ((co.z - TRACE["face"]["nose_z"]) / nb["sz"]) ** 2
+    return (1 - r2) ** 1.2 if r2 < 1 and co.y < -0.2 else 0.0
+
+
+def sculpt_nose(ob, nb):
+    """Push a round nose button out of the head's front, so it is part of the
+    face's profile, and let it follow the Nose bone (sneer) with a soft falloff."""
+    nz = TRACE["face"]["nose_z"]
+    head_vg = ob.vertex_groups[0]
+    nose_vg = ob.vertex_groups.new(name="Nose")
+    for v in ob.data.vertices:
+        if v.co.y > -0.2:
+            continue
+        r2 = (v.co.x / nb["sx"]) ** 2 + ((v.co.z - nz) / nb["sz"]) ** 2
+        if r2 >= 1:
+            continue
+        v.co.y -= nb["h"] * (1 - r2) ** 0.6       # round button, not a cone
+        w = nose_weight(v.co)
+        nose_vg.add([v.index], w, "REPLACE")
+        head_vg.add([v.index], 1 - w, "REPLACE")
+    ob.data.update()
+
+
 def build_traced(mats):
     cfg = CFG
     parts = []
@@ -1946,10 +1992,12 @@ def build_traced(mats):
                 parts.append(ob)
         else:
             ob = loft(vname, rings, bands, mats[mat_key], bone.format(side="", tag=""),
-                      p=cfg.get("loft_p", {}).get(vname, 2.15))
+                      p=cfg.get("loft_p", {}).get(vname, 2.15), n=cfg.get("loft_n", {}).get(vname, 40))
             objs[vname] = ob
             parts.append(ob)
         if vname == "head":
+            if cfg.get("nose_bump"):
+                sculpt_nose(ob, cfg["nose_bump"])
             set_surface(ob)
 
     # Decals: traced colour regions projected onto their part
@@ -2217,6 +2265,15 @@ def build_face(mats):
 
     # Nose: small rounded nub, lifted by the sneer
     nx, ny, nz = L.nose_size
+    if getattr(L, "sculpted_nose", False):
+        # the shape is in the head; paint the darker oval on its tip
+        nose = painted("Nose", 0.0, L.nose_z, nx * 0.9, nz * 0.9, lambda x, z: 0.0022,
+                       mats["nose"], "Nose", back=0.0004)
+        nose.vertex_groups.clear()
+        assign_weights(nose, lambda co: {"Nose": nose_weight(co), "Head": 1 - nose_weight(co)})
+        parts.append(nose)
+        parts.append(build_mouth(mats))
+        return parts
     p = surf_point(0, L.nose_z, -0.4 * ny)
     bm = sphere_bm(1.0, 24, 14)
     transform_bm(bm, scale=(nx, ny, nz), loc=p)
@@ -2264,7 +2321,7 @@ def build_mouth(mats):
         for i in range(nu + 1):
             u = -1 + 2 * i / nu
             z_up, thick = mouth_edges(u)
-            row.append(bm.verts.new(surf_point(u * L.mouth_half_w, z_up - thick * v, MOUTH_OFF)))
+            row.append(bm.verts.new(surf_point(u * L.mouth_half_w, z_up - thick * v, mouth_off())))
         grid.append(row)
     for j in range(nv):
         for i in range(nu):
@@ -2281,6 +2338,10 @@ def build_mouth(mats):
         z_up, thick = mouth_edges(u)
         v = max(0.0, min(1.0, (z_up - co.z) / thick))
         rest = 1 - wc
+        if mouth_mid():
+            if v < 0.5:
+                return {f"MouthCorner_{side}": wc, "LipUp": rest * (1 - 2 * v), "MouthMid": rest * 2 * v}
+            return {f"MouthCorner_{side}": wc, "MouthMid": rest * (2 - 2 * v), "Jaw": rest * (2 * v - 1)}
         return {f"MouthCorner_{side}": wc, "LipUp": rest * (1 - v), "Jaw": rest * v}
 
     assign_weights(ob, w)
@@ -2304,7 +2365,7 @@ def feature_poses(arm):
         return slide(name, dx, dz, L.brow_off)
 
     def mouth(name, dx, dz):
-        return slide(name, dx * kx, dz, MOUTH_OFF)
+        return slide(name, dx * kx, dz, mouth_off())
 
     X = (1, 0, 0)
     f = {}
@@ -2337,6 +2398,8 @@ def feature_poses(arm):
         "MouthCorner_L": mouth("MouthCorner_L", 0, -0.03),
         "MouthCorner_R": mouth("MouthCorner_R", 0, -0.03),
     }
+    if mouth_mid():
+        f["jawOpen"]["MouthMid"] = mouth("MouthMid", 0, -0.059)
     f["mouthPucker"] = {
         "MouthCorner_L": mouth("MouthCorner_L", -0.05, 0),
         "MouthCorner_R": mouth("MouthCorner_R", 0.05, 0),
