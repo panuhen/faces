@@ -1678,6 +1678,187 @@ def build_bare_torso(mats):
     return [loft("Torso", rings, {}, mats["skin"], "Spine1", n=48, p=2.3)]
 
 
+def build_sam_hair(mats, traced):
+    """Sam's short, tousled cut: a scalp cap and overlapping solid locks.
+
+    Angles run from the forehead (0) through +X (90) to the nape (180).
+    All sizes are metres; the reference sheet, rather than the old traced
+    hairstyle, determines the fringe and the rounded rear volume.
+    """
+    out = []
+    centre = Vector((0.0, -0.015, 1.620))
+    rx, ry, rz = 0.520, 0.570, 0.510
+    back_ry = 0.490
+    power = 2.55
+
+    def signed_power(v, p):
+        return math.copysign(abs(v) ** p, v)
+
+    def shell(theta, phi):
+        a, b = math.radians(theta), math.radians(phi)
+        r = math.sin(b) ** (2 / 2.3)
+        depth = back_ry if math.cos(a) < 0 else ry
+        p = centre + Vector((rx * r * signed_power(math.sin(a), 2 / power),
+                             -depth * r * signed_power(math.cos(a), 2 / power),
+                             rz * signed_power(math.cos(b), 2 / 2.3)))
+        p.x *= 0.64 + 0.36 * smoothstep(1.17, 1.49, p.z)
+        return p
+
+    def outward(p):
+        d = p - centre
+        depth = back_ry if d.y > 0 else ry
+        return Vector((d.x / rx ** 2, d.y / depth ** 2, d.z / rz ** 2)).normalized()
+
+    # A closed cap with a high forehead edge, low temples, an ear notch and
+    # continuous coverage immediately behind the ears down to the nape.
+    # Raycasting guards against the traced skull's flatter front and crown.
+    edge = [(0, 1.960), (45, 1.925), (60, 1.740), (73, 1.445),
+            (85, 1.495), (94, 1.495), (102, 1.330),
+            (111, 1.250), (122, 1.235), (140, 1.20), (180, 1.165)]
+
+    def edge_z(theta):
+        theta = abs((theta + 180) % 360 - 180)
+        for (a, za), (b, zb) in zip(edge, edge[1:]):
+            if a <= theta <= b:
+                return za + (zb - za) * smoothstep(a, b, theta)
+        return edge[-1][1]
+
+    bm = bmesh.new()
+    cap_rings = []
+    sectors, levels = 72, 20
+    for j in range(1, levels + 1):
+        ring = []
+        for k in range(sectors):
+            theta = k * 360 / sectors
+            c = (edge_z(theta) - centre.z) / rz
+            phi_end = math.degrees(math.acos(signed_power(c, 2.3 / 2)))
+            p = shell(theta, phi_end * j / levels)
+            direction = (p - centre).normalized()
+            hit, _n, _i, _d = SURF["bvh"].ray_cast(centre + direction * 3, -direction)
+            if hit is not None and (hit - centre).length + 0.025 > (p - centre).length:
+                p = hit + direction * 0.025
+            ring.append(bm.verts.new(p))
+        cap_rings.append(ring)
+    pole = bm.verts.new(shell(0, 0))
+    bottom = bm.verts.new((0, 0.0, 1.62))
+    for k in range(sectors):
+        kn = (k + 1) % sectors
+        bm.faces.new((pole, cap_rings[0][k], cap_rings[0][kn]))
+        bm.faces.new((bottom, cap_rings[-1][kn], cap_rings[-1][k]))
+    for a, b in zip(cap_rings, cap_rings[1:]):
+        for k in range(sectors):
+            kn = (k + 1) % sectors
+            bm.faces.new((a[k], b[k], b[kn], a[kn]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    cap = obj_from_bmesh("SamHairCap", bm, mats["hair"])
+    assign_rigid(cap, "Head")
+    out.append(cap)
+
+    def lock(name, controls, width, thick=0.045, lift=0.024, normal_hint=None):
+        """Closed curved leaf with a broad shoulder and a soft pointed tip.
+
+        The oval cross sections follow the scalp normal, so side/back locks
+        have the same substantial thickness as the fringe. Roots sink into
+        the cap; separate tips supply the ink lines in OutlineEffect.
+        """
+        points = spline(controls, 24)
+        mesh = bmesh.new()
+        rings = []
+        for i, p in enumerate(points):
+            t = i / (len(points) - 1)
+            normal = Vector(normal_hint).normalized() if normal_hint else outward(p)
+            tangent = (points[min(i + 1, len(points) - 1)] - points[max(0, i - 1)]).normalized()
+            across = tangent.cross(normal).normalized()
+            normal = across.cross(tangent).normalized()
+            f = max(0.012, math.sin(math.pi * t) ** 0.72 * (1 - 0.52 * t) * 1.40)
+            raised = lift * math.sin(math.pi * t) + 0.025 * smoothstep(0.65, 1.0, t)
+            buried = 0.064 * (1 - smoothstep(0.08, 0.40, t))
+            p = p + normal * (raised - buried)
+            if not name.startswith("Tuft"):
+                p.z -= 0.016 * smoothstep(0.83, 1.0, t)
+            ring = []
+            for k in range(12):
+                a = k * math.tau / 12
+                ring.append(mesh.verts.new(p + across * (width * f * math.cos(a))
+                                          + normal * (thick * f ** 0.7 * math.sin(a))))
+            rings.append(ring)
+        for a, b in zip(rings, rings[1:]):
+            for k in range(12):
+                kn = (k + 1) % 12
+                mesh.faces.new((a[k], b[k], b[kn], a[kn]))
+        mesh.faces.new(list(reversed(rings[0])))
+        mesh.faces.new(rings[-1])
+        bmesh.ops.recalc_face_normals(mesh, faces=mesh.faces)
+        ob = obj_from_bmesh("SamHair" + name, mesh, mats["hair"])
+        assign_rigid(ob, "Head")
+        out.append(ob)
+
+    def swept(name, angles, width, thick=0.045, lift=0.024):
+        controls = [shell(a, b) for a, b in angles]
+        # Downward tips stay below their broad shoulders even near the nape,
+        # where following the rounded cap alone would turn them back upwards.
+        controls[-1].z -= 0.018 if name.startswith("Nape") else 0.040
+        lock(name, controls, width, thick, lift)
+
+    # Lower locks first; upper layers overlap and bury their narrow roots.
+    for i, theta in enumerate((113, 142, 165, 188, 211, 234, 247)):
+        tip = (141, 150, 146, 151, 145, 149, 137)[i]
+        swept(f"Nape{i:02d}", [(theta - 9, 103), (theta - 6, 121),
+                               (theta - 1, tip - 12), (theta + 5, tip)],
+              0.116, 0.040, 0.024)
+    for i, theta in enumerate((108, 134, 160, 186, 212, 238, 264)):
+        tip = (102, 111, 105, 113, 106, 112, 101)[i]
+        swept(f"BackLower{i:02d}", [(theta - 15, 68), (theta - 8, 82),
+                                    (theta - 1, tip - 12), (theta + 7, tip)],
+              0.137, 0.042, 0.024)
+    for i, theta in enumerate((82, 111, 140, 180, 207, 232, 258, 282)):
+        tip = (74, 72, 66, 84, 66, 74, 67, 78)[i]
+        swept(f"Crown{i:02d}", [(theta - 24, 14), (theta - 14, 33),
+                                (theta - 4, tip - 18), (theta + 5, tip)],
+              0.166 if i == 3 else 0.149, 0.043, 0.026)
+    for side, tag in ((1, "L"), (-1, "R")):
+        swept("Temple" + tag, [(side * 44, 34), (side * 61, 61),
+                               (side * 77, 85), (side * 78, 102)], 0.125, 0.043)
+        swept("EarTop" + tag, [(side * 82, 44), (side * 89, 72),
+                               (side * 96, 91), (side * 103, 105)], 0.120, 0.040)
+        swept("Sideburn" + tag, [(side * 68, 68), (side * 75, 86),
+                                 (side * 78, 99), (side * 76, 109)], 0.076, 0.032)
+
+    def front_point(x, z):
+        r = max(0.01, 1 - abs((z - centre.z) / rz) ** 2.3) ** (1 / 2.3)
+        y = centre.y - ry * r * max(0.015, 1 - abs(x / (rx * r)) ** power) ** (1 / power)
+        hit, _normal, _index, _distance = SURF["bvh"].ray_cast(Vector((x, -5, z)), Vector((0, 1, 0)))
+        if hit is not None:
+            y = min(y, hit.y - 0.026)
+        return Vector((x, y - 0.014, z))
+
+    # Asymmetric swept fringe: all forehead tips are above the brows.
+    fringe = [
+        ("FringeOuterR", [(-0.30, 2.06), (-0.40, 1.98), (-0.445, 1.86), (-0.445, 1.73)], 0.100),
+        ("FringeR", [(-0.15, 2.115), (-0.265, 2.04), (-0.335, 1.94), (-0.36, 1.857)], 0.112),
+        ("FringeSweep", [(-0.015, 2.13), (-0.12, 2.055), (-0.18, 1.95), (-0.205, 1.878)], 0.112),
+        ("FringeCentre", [(0.10, 2.12), (0.025, 2.035), (-0.015, 1.925), (-0.045, 1.825)], 0.112),
+        ("FringeSmall", [(0.14, 2.10), (0.17, 2.015), (0.18, 1.94), (0.155, 1.883)], 0.067),
+        ("FringeL", [(0.20, 2.095), (0.30, 2.035), (0.35, 1.94), (0.355, 1.848)], 0.115),
+        ("FringeOuterL", [(0.31, 2.06), (0.405, 1.97), (0.445, 1.84), (0.445, 1.71)], 0.105),
+    ]
+    for name, controls, width in fringe:
+        lock(name, [front_point(x, z) for x, z in controls], width, 0.048, 0.023)
+
+    # A small cowlick and two outward flicks break up the rounded crown.
+    lock("TuftCentre", [(-0.01, -0.07, 2.095), (-0.06, -0.08, 2.205),
+                        (-0.17, -0.065, 2.26), (-0.25, -0.05, 2.245)], 0.049, 0.032, 0.012, (0, -1, 0))
+    lock("TuftL", [(0.045, 0.025, 2.095), (0.08, 0.03, 2.180),
+                   (0.14, 0.04, 2.195), (0.195, 0.035, 2.18)], 0.040, 0.030, 0.01, (0, -1, 0))
+    lock("TuftR", [(-0.18, 0.02, 2.075), (-0.28, 0.025, 2.15),
+                   (-0.38, 0.02, 2.16), (-0.44, 0.015, 2.19)], 0.037, 0.030, 0.012, (0, -1, 0))
+    triangles = sum(len(p.vertices) - 2 for ob in out for p in ob.data.polygons)
+    if triangles >= 25000:
+        raise RuntimeError(f"Sam's hair exceeds the 25k triangle budget: {triangles}")
+    print(f"SAM HAIR: {len(out) - 1} solid locks + scalp cap, {triangles} triangles, rigid Head weights")
+    return out
+
+
 def sam_details(mats, traced):
     """Toony clothes as one-piece garments with real openings, and cartoon sneakers."""
     if CFG.get("body"):
@@ -1691,6 +1872,7 @@ def sam_details(mats, traced):
         out = build_shirt(mats, traced) + build_shorts(mats, traced)
     for side, tag, flip in (("Right", "R", False), ("Left", "L", True)):
         out += sneaker(tag, side, traced, mats, flip)
+    out += build_sam_hair(mats, traced)
     return out
 
 
