@@ -28,22 +28,102 @@ export interface Tile {
   weights: Weights
 }
 
+/** One loaded character: the model plus its additive face clips. */
+export class Actor {
+  private readonly mixer: THREE.AnimationMixer
+  private readonly actions = new Map<string, THREE.AnimationAction>()
+
+  constructor(
+    readonly root: THREE.Object3D,
+    clips: THREE.AnimationClip[],
+  ) {
+    this.mixer = new THREE.AnimationMixer(root)
+    for (const clip of clips) {
+      const additive = THREE.AnimationUtils.makeClipAdditive(clip.clone(), 0)
+      const action = this.mixer.clipAction(additive)
+      action.blendMode = THREE.AdditiveAnimationBlendMode
+      action.setLoop(THREE.LoopOnce, 1)
+      action.clampWhenFinished = true
+      action.play()
+      action.paused = true
+      action.time = additive.duration
+      action.setEffectiveWeight(0)
+      this.actions.set(clip.name, action)
+    }
+    const missing = FEATURES.filter((f) => !this.actions.has(f))
+    if (missing.length) console.warn('GLB is missing feature clips:', missing)
+  }
+
+  setWeights(w: Weights): void {
+    for (const [name, action] of this.actions) {
+      const v = w[name as keyof Weights] ?? 0
+      action.setEffectiveWeight(Math.max(0, Math.min(1.5, v)))
+    }
+    this.mixer.update(0)
+  }
+}
+
+const gradient = toonGradient()
+
+/** Loads a character GLB and gives it the cel materials. */
+export async function loadActor(url: string): Promise<Actor> {
+  const gltf = await new GLTFLoader().loadAsync(url)
+  const root = gltf.scene
+  // Painted eyes (a 'Lid' material): iris and pupil lose their outlines, which
+  // the outline pass would otherwise draw on top of a closing lid.
+  let painted = false
+  root.traverse((o) => {
+    const m = (o as THREE.Mesh).material as THREE.Material | undefined
+    if ((o as THREE.Mesh).isMesh && m?.name === 'Lid') painted = true
+  })
+  root.traverse((o) => {
+    const mesh = o as THREE.Mesh
+    if (!mesh.isMesh) return
+    mesh.frustumCulled = false
+    const src = mesh.material as THREE.MeshStandardMaterial
+    const name = src.name
+    const mat = FLAT_MATERIALS.has(name)
+      ? new THREE.MeshBasicMaterial({ color: src.color })
+      : new THREE.MeshToonMaterial({ color: src.color, gradientMap: gradient })
+    mat.name = name
+    if (NO_OUTLINE.has(name) || (painted && (name === 'Iris' || name === 'Pupil')))
+      mat.userData.outlineParameters = { visible: false }
+    if (name === 'Mouth') mat.userData.outlineParameters = { thickness: 0.003 }
+    if (name in EYE_ORDER) mesh.renderOrder = EYE_ORDER[name]
+    if (name === 'EyeWhite') {
+      mat.stencilWrite = true
+      mat.stencilRef = 1
+      mat.stencilFunc = THREE.AlwaysStencilFunc
+      mat.stencilZPass = THREE.ReplaceStencilOp
+    } else if (name === 'Lid' || name === 'Lash') {
+      mat.stencilWrite = true // enables the stencil test; ops keep the buffer as is
+      mat.stencilRef = 1
+      mat.stencilFunc = THREE.EqualStencilFunc
+      mat.stencilZPass = THREE.KeepStencilOp
+      mat.depthTest = false
+    }
+    mesh.material = mat
+  })
+  return new Actor(root, gltf.animations)
+}
+
 /**
- * One cel-shaded character: GLB with feature clips played additively.
- * setWeights() poses the face; render() or renderTiles() draws it.
+ * A cel-shaded stage for one or more characters.
+ * setWeights() poses the first character's face; render() or renderTiles() draws.
+ * With { alpha: true } the canvas is see-through, for use over a scene picture.
  */
 export class CharacterStage {
   readonly renderer: THREE.WebGLRenderer
   private readonly effect: OutlineEffect
   readonly scene = new THREE.Scene()
   readonly camera: THREE.OrthographicCamera
-  private mixer: THREE.AnimationMixer | null = null
-  private actions = new Map<string, THREE.AnimationAction>()
-  root: THREE.Object3D | null = null
+  readonly actors: Actor[] = []
+  private readonly alpha: boolean
   background = new THREE.Color('#fff7e8')
 
-  constructor(canvas: HTMLCanvasElement) {
-    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, stencil: true })
+  constructor(canvas: HTMLCanvasElement, opts: { alpha?: boolean } = {}) {
+    this.alpha = opts.alpha ?? false
+    this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: this.alpha, stencil: true })
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     this.effect = new OutlineEffect(this.renderer, {
       defaultThickness: 0.0045,
@@ -61,74 +141,32 @@ export class CharacterStage {
     this.scene.add(key)
   }
 
-  async load(url: string): Promise<void> {
-    const gltf = await new GLTFLoader().loadAsync(url)
-    const root = gltf.scene
-    const gradient = toonGradient()
-    // Painted eyes (a 'Lid' material): iris and pupil lose their outlines, which
-    // the outline pass would otherwise draw on top of a closing lid.
-    let painted = false
-    root.traverse((o) => {
-      const m = (o as THREE.Mesh).material as THREE.Material | undefined
-      if ((o as THREE.Mesh).isMesh && m?.name === 'Lid') painted = true
-    })
-    root.traverse((o) => {
-      const mesh = o as THREE.Mesh
-      if (!mesh.isMesh) return
-      mesh.frustumCulled = false
-      const src = mesh.material as THREE.MeshStandardMaterial
-      const name = src.name
-      const mat = FLAT_MATERIALS.has(name)
-        ? new THREE.MeshBasicMaterial({ color: src.color })
-        : new THREE.MeshToonMaterial({ color: src.color, gradientMap: gradient })
-      mat.name = name
-      if (NO_OUTLINE.has(name) || (painted && (name === 'Iris' || name === 'Pupil')))
-        mat.userData.outlineParameters = { visible: false }
-      if (name === 'Mouth') mat.userData.outlineParameters = { thickness: 0.003 }
-      if (name in EYE_ORDER) mesh.renderOrder = EYE_ORDER[name]
-      if (name === 'EyeWhite') {
-        mat.stencilWrite = true
-        mat.stencilRef = 1
-        mat.stencilFunc = THREE.AlwaysStencilFunc
-        mat.stencilZPass = THREE.ReplaceStencilOp
-      } else if (name === 'Lid' || name === 'Lash') {
-        mat.stencilWrite = true // enables the stencil test; ops keep the buffer as is
-        mat.stencilRef = 1
-        mat.stencilFunc = THREE.EqualStencilFunc
-        mat.stencilZPass = THREE.KeepStencilOp
-        mat.depthTest = false
-      }
-      mesh.material = mat
-    })
-    if (this.root) this.scene.remove(this.root)
-    this.root = root
-    this.scene.add(root)
+  /** The first character's model (dev views turn it). */
+  get root(): THREE.Object3D | null {
+    return this.actors[0]?.root ?? null
+  }
 
-    this.mixer = new THREE.AnimationMixer(root)
-    this.actions.clear()
-    for (const clip of gltf.animations) {
-      const additive = THREE.AnimationUtils.makeClipAdditive(clip.clone(), 0)
-      const action = this.mixer.clipAction(additive)
-      action.blendMode = THREE.AdditiveAnimationBlendMode
-      action.setLoop(THREE.LoopOnce, 1)
-      action.clampWhenFinished = true
-      action.play()
-      action.paused = true
-      action.time = additive.duration
-      action.setEffectiveWeight(0)
-      this.actions.set(clip.name, action)
-    }
-    const missing = FEATURES.filter((f) => !this.actions.has(f))
-    if (missing.length) console.warn('GLB is missing feature clips:', missing)
+  /** Loads a character as the only one on the stage. */
+  async load(url: string): Promise<void> {
+    const actor = await loadActor(url)
+    for (const a of this.actors) this.scene.remove(a.root)
+    this.actors.length = 0
+    this.add(actor)
+  }
+
+  add(actor: Actor): void {
+    this.actors.push(actor)
+    this.scene.add(actor.root)
+  }
+
+  remove(actor: Actor): void {
+    const i = this.actors.indexOf(actor)
+    if (i >= 0) this.actors.splice(i, 1)
+    this.scene.remove(actor.root)
   }
 
   setWeights(w: Weights): void {
-    if (!this.mixer) return
-    for (const [name, action] of this.actions) {
-      const v = w[name as keyof Weights] ?? 0
-      action.setEffectiveWeight(Math.max(0, Math.min(1.5, v)))
-    }
-    this.mixer.update(0)
+    this.actors[0]?.setWeights(w)
   }
 
   resize(width: number, height: number): void {
@@ -142,9 +180,20 @@ export class CharacterStage {
     this.camera.updateProjectionMatrix()
   }
 
+  /** Frames a box of world space: centre (cx, cy), 'height' tall, width from the aspect. */
+  frame(cx: number, cy: number, height: number, aspect: number): void {
+    this.camera.left = cx - (height * aspect) / 2
+    this.camera.right = cx + (height * aspect) / 2
+    this.camera.top = cy + height / 2
+    this.camera.bottom = cy - height / 2
+    this.camera.updateProjectionMatrix()
+  }
+
   render(): void {
     this.renderer.setScissorTest(false)
-    this.renderer.setClearColor(this.background)
+    this.renderer.setClearColor(this.background, this.alpha ? 0 : 1)
+    // clear by hand: several renders in one task (face cards) otherwise pile up
+    this.renderer.clear(true, true, true)
     this.effect.render(this.scene, this.camera)
   }
 
@@ -152,7 +201,7 @@ export class CharacterStage {
   renderTiles(tiles: Tile[], canvasHeight: number, frame: { top: number; bottom: number }): void {
     const r = this.renderer
     r.setScissorTest(true)
-    r.setClearColor(this.background)
+    r.setClearColor(this.background, this.alpha ? 0 : 1)
     for (const t of tiles) {
       this.setWeights(t.weights)
       const y = canvasHeight - t.y - t.h // WebGL origin is bottom-left
@@ -160,11 +209,7 @@ export class CharacterStage {
       r.setScissor(t.x, y, t.w, t.h)
       const aspect = t.w / t.h
       const hgt = frame.top - frame.bottom
-      this.camera.left = (-hgt * aspect) / 2
-      this.camera.right = (hgt * aspect) / 2
-      this.camera.top = frame.top
-      this.camera.bottom = frame.bottom
-      this.camera.updateProjectionMatrix()
+      this.frame(0, (frame.top + frame.bottom) / 2, hgt, aspect)
       this.effect.render(this.scene, this.camera)
     }
     r.setScissorTest(false)

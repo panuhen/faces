@@ -8,3 +8,4 @@ review/*
 backups/
 *.blend1
 codex/*.log
+.~lock.*#

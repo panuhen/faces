@@ -1,0 +1,724 @@
+{
+  "version": 1,
+  "language": "en-US",
+  "meta": {
+    "about": "Script for the Face Feelings demo. See GAME_DESIGN.md section 'story.json format' for every field.",
+    "placeholders": {
+      "{name}": "Character name chosen by the child: Miso or Sam.",
+      "{friend}": "The other character, who is {name}'s friend in the story: Sam when the child picked Miso, Miso when the child picked Sam. From characters[].friendId.",
+      "{hand}": "Per-character word from characters[].words.hand (hand or paw).",
+      "{word}": "Lower-case emotion word from emotions[id].word, e.g. 'sad'.",
+      "{label}": "Card label from emotions[id].label, e.g. 'Sad'.",
+      "{sticker}": "Sticker label of the current scene, e.g. 'a red balloon'."
+    },
+    "textRules": [
+      "Each string is one sentence or one short spoken unit. The app shows it and, if read-aloud is on, speaks it.",
+      "Scene text never names the emotion, so difficulty level 3 (neutral face) works.",
+      "No all-caps words: some speech engines spell them out letter by letter."
+    ]
+  },
+
+  "characters": [
+    { "id": "miso", "name": "Miso", "friendId": "sam",  "words": { "hand": "paw"  }, "pickLine": "This is Miso." },
+    { "id": "sam",  "name": "Sam",  "friendId": "miso", "words": { "hand": "hand" }, "pickLine": "This is Sam." }
+  ],
+
+  "emotionOrder": ["happy", "sad", "surprised", "angry", "scared", "disgusted"],
+
+  "emotions": {
+    "happy": {
+      "label": "Happy",
+      "word": "happy",
+      "introOrder": 1,
+      "hint": [
+        "The mouth corners go up, in a big smile.",
+        "The cheeks go up too."
+      ],
+      "makePrompt": "Can you show {name}'s happy face?",
+      "coach": [
+        { "feature": "mouth", "text": "Push the corners of your mouth up.", "blendshapes": ["mouthSmileLeft", "mouthSmileRight"] },
+        { "feature": "cheeks", "text": "Smile bigger, so your cheeks go up.", "blendshapes": ["cheekSquintLeft", "cheekSquintRight"] }
+      ]
+    },
+    "sad": {
+      "label": "Sad",
+      "word": "sad",
+      "introOrder": 2,
+      "hint": [
+        "The eyebrows go up in the middle.",
+        "The mouth corners go down."
+      ],
+      "makePrompt": "Can you show {name}'s sad face?",
+      "coach": [
+        { "feature": "brows", "text": "Lift the middle of your eyebrows.", "blendshapes": ["browInnerUp"] },
+        { "feature": "mouth", "text": "Pull the corners of your mouth down.", "blendshapes": ["mouthFrownLeft", "mouthFrownRight"] }
+      ]
+    },
+    "surprised": {
+      "label": "Surprised",
+      "word": "surprised",
+      "introOrder": 3,
+      "hint": [
+        "The eyebrows go up high, and the eyes open wide.",
+        "The mouth opens."
+      ],
+      "makePrompt": "Can you show {name}'s surprised face?",
+      "coach": [
+        { "feature": "brows", "text": "Lift your eyebrows up high.", "blendshapes": ["browInnerUp", "browOuterUpLeft", "browOuterUpRight"] },
+        { "feature": "eyes", "text": "Open your eyes wide.", "blendshapes": ["eyeWideLeft", "eyeWideRight"] },
+        { "feature": "mouth", "text": "Open your mouth.", "blendshapes": ["jawOpen"] }
+      ]
+    },
+    "angry": {
+      "label": "Angry",
+      "word": "angry",
+      "introOrder": 4,
+      "hint": [
+        "The eyebrows go down and close together.",
+        "The lips press tight."
+      ],
+      "makePrompt": "Can you show {name}'s angry face?",
+      "coach": [
+        { "feature": "brows", "text": "Pull your eyebrows down and together.", "blendshapes": ["browDownLeft", "browDownRight"] },
+        { "feature": "mouth", "text": "Press your lips together.", "blendshapes": ["mouthPressLeft", "mouthPressRight"] }
+      ]
+    },
+    "scared": {
+      "label": "Scared",
+      "word": "scared",
+      "introOrder": 5,
+      "hint": [
+        "The eyebrows go up, and the eyes open wide.",
+        "The mouth stretches out to the sides."
+      ],
+      "makePrompt": "Can you show {name}'s scared face?",
+      "coach": [
+        { "feature": "brows", "text": "Lift your eyebrows.", "blendshapes": ["browInnerUp", "browOuterUpLeft", "browOuterUpRight"] },
+        { "feature": "eyes", "text": "Open your eyes wide.", "blendshapes": ["eyeWideLeft", "eyeWideRight"] },
+        { "feature": "mouth", "text": "Stretch your mouth out to the sides.", "blendshapes": ["mouthStretchLeft", "mouthStretchRight"] }
+      ]
+    },
+    "disgusted": {
+      "label": "Disgusted",
+      "word": "disgusted",
+      "introOrder": 6,
+      "hint": [
+        "The nose wrinkles up.",
+        "The top lip goes up."
+      ],
+      "makePrompt": "Can you show {name}'s disgusted face?",
+      "coach": [
+        { "feature": "nose", "text": "Wrinkle up your nose.", "blendshapes": ["noseSneerLeft", "noseSneerRight"] },
+        { "feature": "mouth", "text": "Lift your top lip.", "blendshapes": ["mouthUpperUpLeft", "mouthUpperUpRight"] }
+      ]
+    }
+  },
+
+  "ui": {
+    "appTitle": "Face Feelings",
+
+    "home": {
+      "story": "Story",
+      "mirror": "Mirror",
+      "practice": "Practice",
+      "privacyShort": "Everything stays on this phone. No accounts. No recording. Nothing is uploaded."
+    },
+
+    "characterPick": {
+      "prompt": "Who do you want to play with today?",
+      "confirm": "Let's go!"
+    },
+
+    "camera": {
+      "askPermission": [
+        "To play, the game uses the front camera.",
+        "Grown-ups: please tap Allow when the phone asks.",
+        "The camera picture stays on this phone."
+      ],
+      "denied": [
+        "That's OK. You can still play.",
+        "You can tap the faces, and the story goes on."
+      ],
+      "faceLost": [
+        "Let's find your face. Look at the phone.",
+        "Where is your face? Look at the screen."
+      ],
+      "tooDark": "A little more light will help.",
+      "tooFar": "Come a little closer to the phone.",
+      "tooClose": "Move back a little."
+    },
+
+    "calibration": {
+      "prompt": [
+        "Show me your calm face.",
+        "Keep your face still, like {name}."
+      ],
+      "countdown": ["3", "2", "1"],
+      "done": "Thank you! All ready.",
+      "retry": "Let's try that again. Keep your face still."
+    },
+
+    "intro": [
+      "Good morning! This is {name}.",
+      "Let's watch {name}'s day.",
+      "Find out how {name} feels. Then make the same face!"
+    ],
+
+    "outro": [
+      "What a big day for {name}!",
+      "Now the sun goes down. It is time for bed.",
+      "Good night, {name}!",
+      "Look at all your stickers!"
+    ],
+
+    "storyControls": {
+      "hearAgain": "Hear again",
+      "next": "Next"
+    },
+
+    "guess": {
+      "prompt": "How does {name} feel?",
+      "celebrate": [
+        "Yes! {name} feels {word}.",
+        "You found it! {name} feels {word}.",
+        "That's it! {name} feels {word}.",
+        "Good thinking! {name} feels {word}."
+      ],
+      "lookCloser": {
+        "open": [
+          "Let's look closer.",
+          "Let's look at {name}'s face together."
+        ],
+        "point": "Look at the eyebrows. Look at the mouth.",
+        "reveal": "This is {name}'s {word} face.",
+        "tapPrompt": "Can you find the {word} face?",
+        "found": "Yes, that one! {name} feels {word}."
+      }
+    },
+
+    "make": {
+      "meterTiers": [
+        { "tier": 1, "from": 0.0,  "to": 0.25, "lines": ["Let's try. Look at {name}'s face.", "Let's start. Watch {name}'s face."] },
+        { "tier": 2, "from": 0.25, "to": 0.5,  "lines": ["Getting closer!", "That's a good start!"] },
+        { "tier": 3, "from": 0.5,  "to": 0.8,  "lines": ["Almost there!", "Very close now!"] },
+        { "tier": 4, "from": 0.8,  "to": 1.0,  "lines": ["That's it! Hold it.", "Yes! Keep it still."] }
+      ],
+      "success": [
+        "You did it! That's {name}'s {word} face.",
+        "Great face! Just like {name}.",
+        "You made the {word} face!"
+      ],
+      "niceTry": [
+        "Nice try!",
+        "Nice try! Let's see what happens next.",
+        "Thank you for trying! On we go."
+      ],
+      "skip": {
+        "button": "Skip",
+        "spoken": ["OK! Let's see what happens next."]
+      },
+      "noCamera": {
+        "prompt": "Make {name}'s {word} face. Tap Done when you are ready.",
+        "button": "Done",
+        "after": "Great! On we go."
+      }
+    },
+
+    "level1": {
+      "show": "This is {name}'s {word} face.",
+      "reset": "Now {name}'s face is calm again."
+    },
+
+    "sticker": {
+      "earned": [
+        "A sticker for your book!",
+        "Here is your sticker: {sticker}."
+      ],
+      "bookTitle": "Your sticker book",
+      "bookIntro": "Look at all your stickers!",
+      "playAgain": "Play again",
+      "home": "Home"
+    },
+
+    "mirror": {
+      "title": "Mirror",
+      "intro": "Make a face. {name} will copy you!",
+      "ideas": [
+        "Try a big smile.",
+        "Try lifting your eyebrows up high.",
+        "Try opening your mouth wide.",
+        "Try wrinkling your nose.",
+        "Try pulling your eyebrows down.",
+        "Try puffing out your cheeks."
+      ],
+      "done": "Done"
+    },
+
+    "practice": {
+      "title": "Practice",
+      "prompt": "Pick a face to practice.",
+      "again": "Again",
+      "another": "Another face",
+      "success": [
+        "You did it!",
+        "Great face!"
+      ]
+    },
+
+    "adultGate": {
+      "label": "Grown-ups: press and hold for 3 seconds."
+    },
+
+    "privacyNote": [
+      "Face Feelings uses the front camera to follow the shape of the face: eyebrows, eyes, nose and mouth.",
+      "The camera picture is checked on this phone and then thrown away. Nothing is recorded, saved or sent anywhere.",
+      "There are no accounts. The game saves only your settings, the calm-face measurement and the sticker book, and only on this phone.",
+      "The game measures face movements only. It does not decide how anyone feels.",
+      "Tap 'Clear saved data' to delete everything the game has saved."
+    ]
+  },
+
+  "settings": [
+    { "id": "emotions",      "label": "Emotions",              "default": ["happy", "sad", "surprised", "angry", "scared", "disgusted"], "options": "any subset, at least 2", "help": "Choose which faces appear. For a child who is new to this, start with Happy and Sad, then add Surprised and Angry, then Scared and Disgusted." },
+    { "id": "cards",         "label": "Number of cards",       "default": 3, "options": [2, 3, 4, 5, 6], "help": "How many faces the child chooses from. Fewer cards is easier. Cannot be more than the number of emotions that are on." },
+    { "id": "sensitivity",   "label": "Sensitivity",           "default": "medium", "options": ["low", "medium", "high"], "help": "How big a face movement fills the meter. High: a small movement is enough (easier). Low: the face must be bigger and clearer." },
+    { "id": "holdTime",      "label": "Hold time",             "default": 1.0, "options": [0.5, 1.0, 1.5, 2.0], "unit": "s", "help": "How long the face must stay full on the meter before it counts." },
+    { "id": "timeLimit",     "label": "Time limit",            "default": "off", "options": ["off", 10, 20, 30], "unit": "s", "help": "How long the child has to make the face. When time ends, the game says 'Nice try!' and moves on. Off: the game waits until the face is made or Skip is tapped." },
+    { "id": "faceStyle",     "label": "Face style",            "default": "big", "options": ["big", "medium", "subtle"], "help": "How strongly the character shows each feeling. Big is easiest to read. Difficulty level 4 always uses Subtle." },
+    { "id": "difficulty",    "label": "Difficulty level",      "default": 2, "options": [1, 2, 3, 4], "help": "1: copy the character's face, no story. 2: story, and the character shows the feeling. 3: story, the character's face stays calm, so the child works it out from what happens. 4: like 3, with subtle faces on the cards." },
+    { "id": "readAloud",     "label": "Read aloud",            "default": true, "options": [true, false], "help": "The phone's voice reads the story and the instructions." },
+    { "id": "cameraPreview", "label": "Camera preview",        "default": true, "options": [true, false], "help": "Shows the child's camera picture in a small window. Some children find it helpful. Others find it distracting." },
+    { "id": "sessionLength", "label": "Session length",        "default": "short", "options": ["short", "medium", "full"], "sceneCounts": { "short": 4, "medium": 8, "full": 12 }, "help": "How many scenes in one story. The happy party scene is always last." },
+    { "id": "debug",         "label": "Show detection details", "default": false, "options": [true, false], "help": "For grown-ups: shows bars with what the camera measures. Useful for testing. Turn it off for children." },
+    { "id": "recalibrate",   "label": "Recalibrate",           "type": "action", "help": "Measure the calm face again. Do this when the light changes or a different person plays." },
+    { "id": "soundEffects",  "label": "Sound effects",         "default": "soft", "options": ["on", "soft", "off"], "proposal": true, "help": "Story sounds like the dog barking or thunder. Soft keeps them quiet, for children who are sensitive to sudden sounds." },
+    { "id": "clearData",     "label": "Clear saved data",      "type": "action", "proposal": true, "help": "Deletes settings, the calm-face measurement and the sticker book from this phone." }
+  ],
+
+  "scenes": [
+    {
+      "id": "snow_summer",
+      "order": 1,
+      "timeOfDay": "morning",
+      "place": "bedroom",
+      "emotion": "surprised",
+      "text": [
+        "{name} wakes up and looks out of the window.",
+        "It is summer, but it is snowing!"
+      ],
+      "comfort": [
+        "The sun comes out, and the snow melts away.",
+        "Time for breakfast!"
+      ],
+      "illustration": "Bedroom with a bed and one big window. Outside: a green summer tree with snowflakes falling on it. A sun hat on a chair shows that it is summer.",
+      "comfortIllustration": "Same window, sun shining, snow almost gone.",
+      "sticker": { "id": "snowflake", "label": "a snowflake" }
+    },
+    {
+      "id": "old_milk",
+      "order": 2,
+      "timeOfDay": "morning",
+      "place": "kitchen",
+      "emotion": "disgusted",
+      "text": [
+        "{name} pours a glass of milk and smells it.",
+        "The milk is old. It smells very bad!"
+      ],
+      "comfort": [
+        "{friend} pours the old milk away.",
+        "{friend} gives {name} fresh orange juice instead. It smells nice and sweet."
+      ],
+      "illustration": "Kitchen table with a bowl, a milk carton and a glass of milk. Two small wavy green smell lines rise from the glass. Simple cupboard and window behind.",
+      "comfortIllustration": "Same table, a glass of orange juice in place of the milk.",
+      "sticker": { "id": "orange_juice", "label": "a glass of orange juice" }
+    },
+    {
+      "id": "red_balloon",
+      "order": 3,
+      "timeOfDay": "morning",
+      "place": "park",
+      "emotion": "happy",
+      "text": [
+        "At the park, {name} gets a big red balloon on a string.",
+        "Red is {name}'s favorite color!"
+      ],
+      "comfort": null,
+      "illustration": "Park with grass, one tree, a bench and a path. A balloon stand on the side. The red balloon is the only strong color in the picture.",
+      "comfortIllustration": null,
+      "sticker": { "id": "red_balloon", "label": "a red balloon" }
+    },
+    {
+      "id": "balloon_away",
+      "order": 4,
+      "timeOfDay": "morning",
+      "place": "park",
+      "emotion": "sad",
+      "followsId": "red_balloon",
+      "text": [
+        "Whoosh! The wind pulls the balloon string away from {name}.",
+        "The red balloon floats up, up, up into the sky."
+      ],
+      "comfort": [
+        "{friend} has two balloons.",
+        "{friend} gives one to {name}. Now they each have a balloon."
+      ],
+      "illustration": "Same park as the red balloon scene. The red balloon is high in the sky, small. A few leaves blow to show the wind.",
+      "comfortIllustration": "The friend character (Sam or Miso, whichever the child did not pick; calm, kind face) holds out a yellow balloon to the character.",
+      "sticker": { "id": "two_balloons", "label": "two balloons" }
+    },
+    {
+      "id": "tall_tower",
+      "order": 5,
+      "timeOfDay": "midday",
+      "place": "playroom",
+      "emotion": "happy",
+      "text": [
+        "{name} builds a tower with blocks. One block, two blocks, ten blocks!",
+        "It is the tallest tower {name} has ever made."
+      ],
+      "comfort": null,
+      "illustration": "Playroom with a soft rug, a toy shelf and a window. A tall tower of colored blocks, taller than the character.",
+      "comfortIllustration": null,
+      "sticker": { "id": "block_tower", "label": "a tall block tower" }
+    },
+    {
+      "id": "tower_knocked",
+      "order": 6,
+      "timeOfDay": "midday",
+      "place": "playroom",
+      "emotion": "angry",
+      "followsId": "tall_tower",
+      "text": [
+        "{name} has a very tall tower of blocks.",
+        "{friend} pushes the tower over, on purpose.",
+        "Crash! All the blocks fall down."
+      ],
+      "comfort": [
+        "{friend} comes back and says, 'I am sorry. That was not kind.'",
+        "Then the two of them build the tower again, together."
+      ],
+      "illustration": "Same playroom. Blocks scattered on the rug. The friend character is seen from behind or the side, walking away; no mean face.",
+      "comfortIllustration": "Miso and Sam placing blocks on a new tower side by side, calm faces.",
+      "sticker": { "id": "two_hands_blocks", "label": "two friends building" }
+    },
+    {
+      "id": "big_dog",
+      "order": 7,
+      "timeOfDay": "midday",
+      "place": "park",
+      "emotion": "scared",
+      "text": [
+        "In the park, a big dog runs up to {name}.",
+        "Woof! Woof! The dog barks very loudly."
+      ],
+      "comfort": [
+        "{friend} calls, 'Rufus, come here!'",
+        "The dog sits down next to {friend} and wags its tail. Rufus is {friend}'s dog, and he is friendly."
+      ],
+      "illustration": "Same park, path in front. A big brown dog with an open mouth mid-bark, front paws on the ground (not jumping on the character). The friend character far back with a leash, running to catch up.",
+      "comfortIllustration": "Dog sitting next to the friend character, tail up, mouth closed or tongue out.",
+      "sticker": { "id": "dog_tail", "label": "a friendly dog" }
+    },
+    {
+      "id": "jack_in_box",
+      "order": 8,
+      "timeOfDay": "afternoon",
+      "place": "living_room",
+      "emotion": "surprised",
+      "text": [
+        "{name} finds a toy box with a little handle and turns it round and round.",
+        "Music plays. Then, pop! A toy jumps out of the box on a spring!"
+      ],
+      "comfort": [
+        "It is a jack-in-the-box.",
+        "{name} pushes the toy back in, ready to play again."
+      ],
+      "illustration": "Living room with a sofa, a lamp and a rug. A bright box with a crank handle; a soft puppet on a spring has popped out. Use a smiling sun or bird puppet, not a clown.",
+      "comfortIllustration": "The box closed again, lid on top.",
+      "sticker": { "id": "jack_box", "label": "a jack-in-the-box" }
+    },
+    {
+      "id": "apple_worm",
+      "order": 9,
+      "timeOfDay": "afternoon",
+      "place": "garden",
+      "emotion": "disgusted",
+      "text": [
+        "{name} has a picnic in the garden and takes a big bite of an apple.",
+        "Inside the apple there is a little wiggly worm!"
+      ],
+      "comfort": [
+        "{name} puts the apple on the grass for the worm.",
+        "{friend} gives {name} a banana instead. It is clean and sweet."
+      ],
+      "illustration": "Garden with grass, a picnic blanket, a fence and a flower bed. A green apple with a bite out of it and a small pink cartoon worm peeking out.",
+      "comfortIllustration": "Apple on the grass with the worm; a yellow banana on the blanket.",
+      "sticker": { "id": "banana", "label": "a banana" }
+    },
+    {
+      "id": "cake_drop",
+      "order": 10,
+      "timeOfDay": "afternoon",
+      "place": "bakery",
+      "emotion": "sad",
+      "text": [
+        "At the bakery, {name} carries a chocolate cake to the table.",
+        "The cake slips. Splat! It falls on the floor."
+      ],
+      "comfort": [
+        "{friend} comes over with a smile.",
+        "{friend} shares a cupcake with a cherry on top. 'Accidents happen,' says {friend}."
+      ],
+      "illustration": "Bakery with a glass counter, a few cakes on shelves and a small round table. A chocolate cake upside down on the floor; no mess beyond one brown splat.",
+      "comfortIllustration": "The friend character (calm, kind face) holding out a cupcake with a cherry.",
+      "sticker": { "id": "cupcake", "label": "a cupcake with a cherry" }
+    },
+    {
+      "id": "thunderstorm",
+      "order": 11,
+      "timeOfDay": "afternoon",
+      "place": "living_room",
+      "emotion": "scared",
+      "text": [
+        "In the afternoon, the sky goes dark.",
+        "There is a flash of lightning. Then, boom! The thunder is very loud."
+      ],
+      "comfort": [
+        "{friend} sits next to {name} and holds {name}'s {hand}.",
+        "The two of them wait together until the storm is over. Then the sun comes out again."
+      ],
+      "illustration": "Same living room as the jack-in-the-box scene. Big window with a grey sky, rain and one lightning bolt. Show lightning as a soft glow, never a flashing screen.",
+      "comfortIllustration": "Same window, rainbow and sun. Miso and Sam on the sofa together.",
+      "sticker": { "id": "rainbow", "label": "a rainbow" }
+    },
+    {
+      "id": "party",
+      "order": 12,
+      "timeOfDay": "evening",
+      "place": "garden",
+      "emotion": "happy",
+      "finale": true,
+      "text": [
+        "Today is party day!",
+        "Ding dong! {friend} is at the door, with cake and balloons!"
+      ],
+      "comfort": null,
+      "illustration": "Same garden as the picnic scene, now with bunting, a table with a cake and balloons. The friend character (Sam or Miso, whichever the child did not pick) at the door, both characters waving with happy faces.",
+      "comfortIllustration": null,
+      "sticker": { "id": "party_hat", "label": "a party hat" }
+    }
+  ],
+
+  "finaleId": "party",
+
+  "extraScenes": [
+    {
+      "id": "x_pancakes",
+      "order": 2.5,
+      "timeOfDay": "morning",
+      "place": "kitchen",
+      "emotion": "happy",
+      "text": [
+        "{name} helps make pancakes. Mix, pour, flip!",
+        "The pancakes are round and warm, and {name} gets the first one."
+      ],
+      "comfort": null,
+      "illustration": "Same kitchen as the milk scene. A plate with a stack of pancakes and a jug of syrup.",
+      "comfortIllustration": null,
+      "sticker": { "id": "pancakes", "label": "a stack of pancakes" }
+    },
+    {
+      "id": "x_sprinkles",
+      "order": 10.5,
+      "timeOfDay": "afternoon",
+      "place": "bakery",
+      "emotion": "happy",
+      "text": [
+        "At the bakery, {name} and {friend} put sprinkles on a big cake.",
+        "Lots and lots of sprinkles!"
+      ],
+      "comfort": null,
+      "illustration": "Same bakery. A white cake on the counter covered in colored sprinkles, a sprinkle shaker next to it.",
+      "comfortIllustration": null,
+      "sticker": { "id": "sprinkles", "label": "a sprinkle cake" }
+    },
+    {
+      "id": "x_toy_car",
+      "order": 1.5,
+      "timeOfDay": "morning",
+      "place": "bedroom",
+      "emotion": "sad",
+      "text": [
+        "{name}'s favorite toy car has a broken wheel.",
+        "The car cannot roll any more."
+      ],
+      "comfort": [
+        "{friend} helps fix the wheel with glue.",
+        "Tomorrow the car can roll again."
+      ],
+      "illustration": "Same bedroom. A small blue toy car on the floor, one wheel lying next to it.",
+      "comfortIllustration": "The friend character gluing the wheel back on; a glue tube on the floor.",
+      "sticker": { "id": "toy_car", "label": "a blue toy car" }
+    },
+    {
+      "id": "x_sandcastle",
+      "order": 7.5,
+      "timeOfDay": "midday",
+      "place": "beach",
+      "emotion": "sad",
+      "text": [
+        "{name} builds a sandcastle on the beach.",
+        "A wave comes and washes the sandcastle away."
+      ],
+      "comfort": [
+        "{name} builds a new sandcastle, higher up on the sand.",
+        "The waves cannot reach it there."
+      ],
+      "illustration": "Beach with calm blue sea, sand and a bucket and spade. A flat wet patch where the sandcastle was, a small wave going back.",
+      "comfortIllustration": "A new sandcastle with a little flag, far from the water.",
+      "sticker": { "id": "sandcastle", "label": "a sandcastle" }
+    },
+    {
+      "id": "x_popcorn",
+      "order": 10.6,
+      "timeOfDay": "afternoon",
+      "place": "kitchen",
+      "emotion": "surprised",
+      "text": [
+        "{name} watches corn seeds in a pot with a glass lid.",
+        "Then, pop, pop, pop! The seeds jump up and turn into popcorn!"
+      ],
+      "comfort": [
+        "Now there is a big bowl of warm popcorn."
+      ],
+      "illustration": "Same kitchen. A pot with a glass lid on the stove, white popcorn bouncing inside.",
+      "comfortIllustration": "A bowl of popcorn on the table.",
+      "sticker": { "id": "popcorn", "label": "a bowl of popcorn" }
+    },
+    {
+      "id": "x_rabbit",
+      "order": 9.5,
+      "timeOfDay": "afternoon",
+      "place": "garden",
+      "emotion": "surprised",
+      "text": [
+        "{name} lifts up a big leaf in the garden.",
+        "Hop! A little rabbit jumps out from under it!"
+      ],
+      "comfort": [
+        "The rabbit hops away into the bushes."
+      ],
+      "illustration": "Same garden. A large leafy plant, a small grey rabbit mid-hop.",
+      "comfortIllustration": "Rabbit tail disappearing into a bush.",
+      "sticker": { "id": "rabbit", "label": "a little rabbit" }
+    },
+    {
+      "id": "x_stuck_zip",
+      "order": 2.8,
+      "timeOfDay": "morning",
+      "place": "hallway",
+      "emotion": "angry",
+      "text": [
+        "{name} wants to go outside, but the zip on the coat is stuck.",
+        "{name} pulls and pulls. The zip stays stuck, again and again."
+      ],
+      "comfort": [
+        "{friend} shows how to do it: hold the bottom, then pull slowly.",
+        "Zip! The coat is closed. Off to the park!"
+      ],
+      "illustration": "Hallway with a front door, a coat hook and a shoe rack. The character wears an open coat; the zip is shown clearly.",
+      "comfortIllustration": "Coat zipped up, front door open to sunshine.",
+      "sticker": { "id": "coat", "label": "a coat" }
+    },
+    {
+      "id": "x_drawing_stop",
+      "order": 9.8,
+      "timeOfDay": "afternoon",
+      "place": "playroom",
+      "emotion": "angry",
+      "text": [
+        "{name} is drawing a big picture of a house.",
+        "{friend} says, 'Stop now. It is time to go to the bakery.' The picture is not finished."
+      ],
+      "comfort": [
+        "'You can finish it when we come home,' says {friend}.",
+        "{name} puts the picture in a safe place on the shelf."
+      ],
+      "illustration": "Same playroom. A small table with crayons and a half-colored drawing of a house.",
+      "comfortIllustration": "The drawing lying flat on a shelf.",
+      "sticker": { "id": "crayons", "label": "a box of crayons" }
+    },
+    {
+      "id": "x_dark_shed",
+      "order": 9.6,
+      "timeOfDay": "afternoon",
+      "place": "garden",
+      "emotion": "scared",
+      "text": [
+        "{name} goes into the garden shed. It is dark inside.",
+        "Something moves in the corner. Rustle, rustle!"
+      ],
+      "comfort": [
+        "{friend} opens the door wide, and the light comes in.",
+        "It is a little bird. The bird flies out into the garden."
+      ],
+      "illustration": "Inside a wooden shed, dim but not black: a watering can, a rake on the wall. A small dark shape in the corner. Keep it dim, never scary detail.",
+      "comfortIllustration": "Shed door open, sunlight, a small brown bird flying out.",
+      "sticker": { "id": "bird", "label": "a little bird" }
+    },
+    {
+      "id": "x_big_wave",
+      "order": 7.6,
+      "timeOfDay": "midday",
+      "place": "beach",
+      "emotion": "scared",
+      "text": [
+        "{name} is playing on the beach.",
+        "A big wave rushes up the sand, very fast, right up to {name}!"
+      ],
+      "comfort": [
+        "{friend} takes {name}'s {hand}, and they run up the sand together.",
+        "The wave slides back into the sea. Now the two of them play on the dry sand."
+      ],
+      "illustration": "Same beach. A big white-topped wave reaching up the sand towards the character. No deep water, no one in the water.",
+      "comfortIllustration": "Miso and Sam hand in hand on dry sand, wave going back, calm sea.",
+      "sticker": { "id": "seashell", "label": "a seashell" }
+    },
+    {
+      "id": "x_moldy_roll",
+      "order": 10.4,
+      "timeOfDay": "afternoon",
+      "place": "bakery",
+      "emotion": "disgusted",
+      "text": [
+        "At the bakery, {name} picks up an old bread roll from the back of a shelf.",
+        "Underneath, the bread is green and fuzzy. It is moldy!"
+      ],
+      "comfort": [
+        "{friend} puts the old roll in the bin.",
+        "Then {friend} gives {name} a fresh, warm roll."
+      ],
+      "illustration": "Same bakery. A bread roll turned over, with soft green fuzzy spots underneath.",
+      "comfortIllustration": "A golden fresh roll in a paper bag.",
+      "sticker": { "id": "bread_roll", "label": "a warm bread roll" }
+    },
+    {
+      "id": "x_seaweed",
+      "order": 7.7,
+      "timeOfDay": "midday",
+      "place": "beach",
+      "emotion": "disgusted",
+      "text": [
+        "{name} steps on a pile of seaweed.",
+        "It is cold and slimy, and it smells like old fish."
+      ],
+      "comfort": [
+        "{name} washes the slime off in the clean sea water.",
+        "All clean again!"
+      ],
+      "illustration": "Same beach. A pile of dark green seaweed on the sand, two small smell lines above it.",
+      "comfortIllustration": "Character at the edge of small calm waves, splashing water.",
+      "sticker": { "id": "starfish", "label": "a starfish" }
+    }
+  ]
+}

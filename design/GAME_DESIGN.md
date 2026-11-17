@@ -1,7 +1,7 @@
 # Face Feelings: game design document
 
 Working title: "Face Feelings" (folder name; see open question Q1).
-Script file: `story.json` in this folder. The app loads all copy from it.
+Script file: `story.json` in this folder (a link to `web/src/game/story.json`, where the app loads all copy from). Voice transcript: `voice_lines.md` and `voice_lines.csv`, made by `web/scripts/voice-lines.mjs`.
 Status: draft, 2026-11-17. Updated 2026-11-17: two characters (Miso, Sam); Pip dropped.
 
 How to read this document:
