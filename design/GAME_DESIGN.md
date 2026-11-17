@@ -2,7 +2,7 @@
 
 Working title: "Face Feelings" (folder name; see open question Q1).
 Script file: `story.json` in this folder. The app loads all copy from it.
-Status: draft, 2026-11-17.
+Status: draft, 2026-11-17. Updated 2026-11-17: two characters (Miso, Sam); Pip dropped.
 
 How to read this document:
 
@@ -16,7 +16,7 @@ Copy lines that the owner gave word for word ("Let's look closer", "Nice try!", 
 
 ## Overview
 
-A mobile web game (React, phone browsers on iOS and Android) that helps children with special needs, mainly autistic children aged about 4 to 10, learn to recognise six emotions. A cartoon character goes through one day. The narrator tells a short situation, the child taps the face card that matches how the character feels, and then makes that face. The front camera follows the child's face with MediaPipe Face Landmarker blendshapes and fills a gentle "getting closer" meter.
+A mobile web game (React, phone browsers on iOS and Android) that helps children with special needs, mainly autistic children aged about 4 to 10, learn to recognise six emotions. A cartoon character, Miso the cat or Sam the kid, goes through one day. The narrator tells a short situation, the child taps the face card that matches how the character feels, and then makes that face. The front camera follows the child's face with MediaPipe Face Landmarker blendshapes and fills a gentle "getting closer" meter.
 
 It is a showcase demo, not a medical or therapy product.
 
@@ -60,30 +60,33 @@ Each emotion has a child-friendly face hint of one or two short lines, about bro
 
 ## A4. Characters
 
-The child picks one of three. All use the same rig and the same face rules. Chibi proportions: big head, small body.
+The child picks one of two. Both use the same rig and the same face rules. Chibi proportions: big head, small body.
 
-- **Pip**: round blob creature, big head, tiny body, stub arms.
 - **Miso**: cartoon cat, front-facing flat face, tabby marks that work as eyebrows.
 - **Sam**: cartoon kid, gender-neutral. Use "Sam" or they/them, never he/she.
 
-Story text works for all three: it uses a `{name}` placeholder and avoids pronouns where it can. If a pronoun is needed, it is they/them.
+Pip (the blob creature) is dropped from the game (owner decision, 2026-11-17).
+
+The story has only these two characters (owner decision, 2026-11-17). The character the child did not pick is the friend (`{friend}`) and plays every other role: helper, guest, the one who knocks the tower over and says sorry, the dog's owner. No grown-ups, baker or other children appear.
+
+Story text works for both: it uses a `{name}` placeholder and avoids pronouns where it can. If a pronoun is needed, it is they/them.
 
 ## A5. The day (structure fixed, wording may be refined)
 
 | # | Situation | Emotion | Comfort |
 |---|---|---|---|
 | 1 | Wakes up, it's snowing in summer | surprised | (none given, see P3) |
-| 2 | Breakfast milk has gone bad | disgusted | fresh juice instead |
+| 2 | Breakfast milk has gone bad | disgusted | the friend gives fresh juice instead |
 | 3 | Gets a red balloon at the park | happy | none |
-| 4 | The balloon floats away | sad | a friend shares theirs |
+| 4 | The balloon floats away | sad | the friend shares theirs |
 | 5 | Builds the tallest tower ever | happy | none |
-| 6 | Someone knocks it over on purpose | angry | they say sorry and help rebuild |
-| 7 | A big dog barks loudly | scared | owner calls the dog, it wags its tail |
+| 6 | The friend knocks it over on purpose | angry | the friend says sorry and helps rebuild |
+| 7 | A big dog barks loudly | scared | the friend calls the dog (it is the friend's dog), it wags its tail |
 | 8 | A jack-in-the-box springs out | surprised | (none given, see P3) |
-| 9 | Finds a worm in the apple | disgusted | swaps for a banana |
-| 10 | Drops a cake at the bakery | sad | the baker gives a cupcake |
-| 11 | Afternoon thunderstorm | scared | a grown-up holds their hand until it passes |
-| 12 | FINALE: friends arrive for a party | happy | day ends, sticker book |
+| 9 | Finds a worm in the apple | disgusted | the friend gives a banana |
+| 10 | Drops a cake at the bakery | sad | the friend shares a cupcake |
+| 11 | Afternoon thunderstorm | scared | the friend holds their hand until it passes |
+| 12 | FINALE: the friend arrives for a party | happy | day ends, sticker book |
 
 Plus a short intro (morning greeting, explains the game in 2 to 3 lines) and an outro.
 
@@ -149,7 +152,7 @@ Home ──► Character pick ──► Camera permission (first time) ──►
 - The last chosen character stands on the home screen, idle animation, calm face.
 
 ### Character pick
-- "Who do you want to play with today?" Three characters side by side. Tapping one makes it wave and says its `pickLine` ("This is Pip."). A big "Let's go!" button confirms.
+- "Who do you want to play with today?" Miso and Sam side by side. Tapping one makes it wave and says its `pickLine` ("This is Miso."). A big "Let's go!" button confirms.
 - The choice is remembered on the phone and preselected next time (P1).
 
 ### Camera permission
@@ -369,10 +372,11 @@ Note: the decided list of stored items (A11) is settings and calm-face baseline.
 - Scene text never names the emotion (so level 3 works). Celebration and reveal lines name the character's feeling, never the child's.
 - Coach and hint lines name a face part and an action only.
 - No all-caps words ("Woof", not "WOOF"); some speech engines read capitals letter by letter.
-- No he/she. `{name}` is repeated rather than replaced by a pronoun. "They" appears only for groups ("They brought cake").
-- `{hand}` placeholder: "paw" for Miso, "hand" for Pip and Sam. Used once (thunderstorm).
+- No he/she. `{name}` is repeated rather than replaced by a pronoun. "They" appears only for groups ("they run up the sand together").
+- `{hand}` placeholder: "paw" for Miso, "hand" for Sam. Used once (thunderstorm).
+- `{friend}` placeholder: the character the child did not pick (A4). Used wherever a second person appears in a scene.
 - US spelling (color, favorite, practice, moldy). See Q2.
-- Quotes from story people (the baker, the dog owner) stay in the narrator voice. The character's own lines ("Let's look closer") use the same voice with slightly higher pitch (P14).
+- Quotes from the friend stay in the narrator voice. The character's own lines ("Let's look closer") use the same voice with slightly higher pitch (P14).
 
 ## B9. Scene illustration notes
 
@@ -380,7 +384,7 @@ General rules for all scene backgrounds:
 - Simple and uncluttered: one place, 3 to 6 objects, soft flat colors, plain sky or wall.
 - One strong color at most, used for the object the story is about (the red balloon, the cake).
 - No text in pictures.
-- Background people (friend, baker, grown-up, other child) have calm, kind faces, or are seen from the side or behind. They must never show a stronger emotion than the main character, so they do not compete with the face the child should read.
+- The friend character has a calm, kind face, or is seen from the side or behind. The friend must never show a stronger emotion than the main character, so they do not compete with the face the child should read.
 - No flashing. Lightning is a soft glow, never a white-screen flash (photosensitivity).
 - Recurring places reuse the same background (the park in scenes 3, 4, 7; the living room in 8 and 11; the garden in 9 and 12), so "same place, different outcome" is visible.
 - Each scene has two pictures: the event moment (`illustration`) and the comfort moment (`comfortIllustration`). Happy scenes need only one.
@@ -393,15 +397,15 @@ Per scene (main day):
 | 1 | snow_summer | Bedroom, bed, big window. Green summer tree outside with snow falling. Sun hat on a chair. | Same window, sun out, snow almost gone. |
 | 2 | old_milk | Kitchen table, bowl, milk carton, glass of milk with two wavy green smell lines. | Glass of orange juice instead. |
 | 3 | red_balloon | Park: grass, one tree, bench, path, balloon stand. The red balloon is the only strong color. | (happy) |
-| 4 | balloon_away | Same park. Red balloon small and high in the sky; a few leaves blowing. | A friend with a calm, kind face holds out a yellow balloon. |
+| 4 | balloon_away | Same park. Red balloon small and high in the sky; a few leaves blowing. | The friend character (the one not picked) with a calm, kind face holds out a yellow balloon. |
 | 5 | tall_tower | Playroom: soft rug, toy shelf, window. Tower of colored blocks taller than the character. | (happy) |
-| 6 | tower_knocked | Same playroom. Blocks scattered. Other child seen from behind, walking away; no mean face. | Both children building a new tower side by side. |
-| 7 | big_dog | Same park. Big brown dog mid-bark, all four paws on the ground. Owner far back with a leash. | Dog sitting by the owner, tail up. |
+| 6 | tower_knocked | Same playroom. Blocks scattered. The friend character seen from behind, walking away; no mean face. | Miso and Sam building a new tower side by side. |
+| 7 | big_dog | Same park. Big brown dog mid-bark, all four paws on the ground. The friend character far back with a leash. | Dog sitting by the friend character, tail up. |
 | 8 | jack_in_box | Living room: sofa, lamp, rug. Box with crank handle; a smiling sun or bird puppet on a spring. No clown. | Box closed again. |
 | 9 | apple_worm | Garden: grass, picnic blanket, fence, flower bed. Bitten green apple with a small pink cartoon worm. | Apple on the grass; banana on the blanket. |
-| 10 | cake_drop | Bakery: glass counter, cakes on shelves, small round table. Chocolate cake upside down on the floor, one brown splat. | Baker holding out a cupcake with a cherry. |
-| 11 | thunderstorm | Same living room. Big window: grey sky, rain, one lightning bolt as a soft glow. | Same window with rainbow and sun; grown-up and character on the sofa. |
-| 12 | party | Same garden with bunting, table with cake and balloons. Friends waving: the two characters not picked, plus the balloon friend. | (happy) |
+| 10 | cake_drop | Bakery: glass counter, cakes on shelves, small round table. Chocolate cake upside down on the floor, one brown splat. | The friend character holding out a cupcake with a cherry. |
+| 11 | thunderstorm | Same living room. Big window: grey sky, rain, one lightning bolt as a soft glow. | Same window with rainbow and sun; Miso and Sam on the sofa. |
+| 12 | party | Same garden with bunting, table with cake and balloons. The friend character (the one not picked) at the door, both characters waving. | (happy) |
 
 Extra scene drawing notes are in `story.json`, same fields.
 
@@ -421,7 +425,7 @@ Top-level fields:
 | `version` | number | Script format version. |
 | `language` | string | `en-US`. |
 | `meta` | object | Placeholder list and text rules, for people reading the file. |
-| `characters[]` | array | `id`, `name`, `words.hand`, `pickLine`. |
+| `characters[]` | array | `id`, `name`, `friendId` (the other character, fills `{friend}`), `words.hand`, `pickLine`. |
 | `emotionOrder` | string[] | Introduction order. Use for Practice cards, settings list and the session picker. |
 | `emotions.<id>` | object | See below. Ids: `happy`, `sad`, `angry`, `surprised`, `scared`, `disgusted`. |
 | `ui` | object | All shared copy, grouped by screen. |
@@ -482,7 +486,7 @@ Changes from the suggested shape: `text` and `comfort` are arrays of lines (for 
 | P16 | Session picker in B4 (rotating emotions in introduction order, skip happy in short sessions, same-place pairs in medium, no 3 hard scenes in a row). |
 | P17 | Level ladder details in B3: make-face target always big; level 4 forces subtle cards. |
 | P18 | Look-closer flow in B2: zoom, pointer on brows then mouth, hint, then the target card pulses for a tap; auto-continue after 6 s. |
-| P19 | Party friends are the two characters the child did not pick, plus the balloon friend. |
+| P19 | Decided 2026-11-17, now in A4: the character the child did not pick is the friend and plays every other role. Still open: the exact wording of the rewritten lines. |
 | P20 | The dog has a name (Rufus); the jack-in-the-box toy is a sun or bird puppet, not a clown. |
 | P21 | The 12 extra scenes in `extraScenes`, including two new places (hallway, beach). |
 | P22 | All draft copy in `story.json` beyond the lines the owner gave. |
@@ -495,12 +499,12 @@ Changes from the suggested shape: `text` and `comfort` are arrays of lines (for 
 |---|---|
 | Q1 | Title. "Face Feelings" is only the folder name. |
 | Q2 | US or UK English spelling, and which speech voice (en-US or en-GB)? Brief used "recognise"; script uses US spelling. |
-| Q3 | Pip is a blob creature. Does the rig give Pip visible eyebrows? The hints and the look-closer pointer depend on brows on all three characters (Miso's tabby marks count). |
+| Q3 | (Closed: Pip is dropped. Miso and Sam both have visible eyebrows.) |
 | Q4 | Should the MediaPipe model and WASM files be hosted with the app instead of loaded from a public CDN? A CDN request sends nothing about the face, but it does contact a third party, which matters for the "nothing leaves the phone" claim. |
 | Q5 | The decided storage list is settings and calm-face baseline. The design also stores stickers, last character and the session-picker position (no face data). OK to add these, and to say so in the privacy note? |
 | Q6 | The introduction order (happy, sad, surprised, angry, scared, disgusted) differs from the day order (the day opens with surprised, then disgusted). This design applies the introduction order to the settings advice, Practice, and the short-session picker, and keeps the day order for full sessions. Is that the intended reading? |
 | Q7 | How often should extra scenes appear: only to fill gaps when emotions are off, or also at random for variety on replays (e.g. one extra per medium session)? |
-| Q8 | Scene 6 is the one allowed unkind act. The other child is drawn from behind. Should the apology also show the other child's face (calm, sorry), or stay narrated only? |
+| Q8 | Scene 6 is the one allowed unkind act, and the friend now does it (and says sorry). Is that OK for the friend, or should the tower fall another way? Also: should the apology show the friend's face (calm, sorry), or stay narrated only? |
 | Q9 | Background art: 2D painted backgrounds behind the 3D character, or simple 3D sets? Affects the illustration workload. |
 | Q10 | Should the level 1 story still show scene pictures at all, or should level 1 in Story mode simply redirect to Practice? |
 | Q11 | Startle scenes (dog, thunder, jack-in-the-box, wave, dark shed) may be hard for sound-sensitive children even with soft sounds. Is turning Scared off in settings enough, or should the settings help text warn about these scenes? |

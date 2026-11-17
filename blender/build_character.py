@@ -105,15 +105,25 @@ CHARACTERS = {
                   "arm": ("skin", "{side}Arm"), "leg": ("skin", "{side}UpLeg"), "tail": ("skin", "Hips")},
         "decal_mats": {"Muzzle": "cream", "Belly": "cream", "EarInner": "pink", "Stripe": "stripe"},
         "layout": dict(lid_up_rest=72.0, lid_low_rest=-80.0, brow_off=0.032, eye_sink=0.045, iris_k=1.15,
-                       nose_size_y=0.034),
+                       nose_size_y=0.034, brow_teardrop=True, scowl_k=1.35,
+                       stretch_tail=(0.05, -0.068), scowl_lid=(32.0, 22.0), squint_lid_up=34.0,
+                       stretch_lid_low=(46.0, 38.0)),
         "whiskers": True,
-        "skip": ["tail"],
+        # one metaball body (MISO_BODY) replaces the lofted torso, arms and legs
+        "skip": ["tail", "torso", "arm", "leg"],
+        "mb_body": "MISO_BODY", "mb_cream": "MISO_CREAM", "spine": "MISO_SPINE",
+        "smooth_back": {"head": 20},
+        # flat head bottom: the full round cap hung under the chin like a thick neck
+        "dome_bottom_h": {"head": 0.15},
         # (top, bottom) extension along the part's own centre line, metres
         "extend": {"arm": (0.12, 0.0), "leg": (0.06, 0.0), "ear": (0.0, 0.2)},
-        "min_z": {"ear": 1.86},
+        # arm: drop the narrow traced tip below the paw, so the dome rounds the paw
+        # head: drop the narrow traced rows under the chin (they read as a thick neck)
+        "min_z": {"ear": 1.86, "arm": 0.416, "head": 0.94},
         "dome": {"head": (False, True), "torso": (False, True), "leg": (False, False)},
         # Tail centre line (x, y, z) measured from the front and side views
-        "tail": [(0.12, 0.22, 0.36), (0.38, 0.3, 0.37), (0.48, 0.32, 0.52), (0.5, 0.3, 0.72),
+        # (first point sits inside the body so the tube's flat end is hidden)
+        "tail": [(0.04, 0.09, 0.38), (0.16, 0.2, 0.36), (0.38, 0.3, 0.37), (0.48, 0.32, 0.52), (0.5, 0.3, 0.72),
                  (0.46, 0.27, 0.84), (0.38, 0.24, 0.86)],
         # Ears fold out sideways when sad or scared, prick up when surprised
         "accent_poses": {
@@ -364,6 +374,35 @@ def body_bones(bone, head_h, head_t):
         bone(f"{side}Foot", ankle, ankle + Vector((0, -0.11, -0.05)), f"{side}Leg")
 
 
+def mb_body_bones(bone, head_h, head_t):
+    """Body bones inside a metaball body without fingers (Miso): spine on the
+    torso's centre line, limb joints where the body's capsules meet."""
+    placed = BODY_INFO["placed"]
+    seg = {bn: (A, B) for A, B, bn, _s in placed if B is not None}
+    ctr = {bn: A for A, B, bn, _s in placed if B is None}
+    sp = globals()[CFG["spine"]]
+    y, zs = sp["y"], sp["zs"]
+    bone("Hips", (0, y, zs[0]), (0, y, zs[1]))
+    bone("Spine", (0, y, zs[1]), (0, y, zs[2]), "Hips")
+    bone("Spine1", (0, y, zs[2]), (0, y, zs[3]), "Spine")
+    bone("Spine2", (0, y, zs[3]), (0, y, zs[4]), "Spine1")
+    bone("Neck", (0, y, zs[4]), head_h, "Spine2")
+    bone("Head", head_h, head_t, "Neck")
+    for side, s in (("Left", 1), ("Right", -1)):
+        sh, el = seg[f"{side}Arm"]
+        _el, wr = seg[f"{side}ForeArm"]
+        paw = ctr[f"{side}Hand"]
+        bone(f"{side}Shoulder", (0.06 * s, y, sh.z), sh, "Spine2")
+        bone(f"{side}Arm", sh, el, f"{side}Shoulder")
+        bone(f"{side}ForeArm", el, wr, f"{side}Arm")
+        bone(f"{side}Hand", wr, paw + (paw - wr), f"{side}ForeArm")
+        hip, knee = seg[f"{side}UpLeg"]
+        _k, ankle = seg[f"{side}Leg"]
+        bone(f"{side}UpLeg", hip, knee, "Hips")
+        bone(f"{side}Leg", knee, ankle, f"{side}UpLeg")
+        bone(f"{side}Foot", ankle, ankle + Vector((0, -0.11, -0.05)), f"{side}Leg")
+
+
 def build_armature():
     arm_data = bpy.data.armatures.new("Rig")
     arm = bpy.data.objects.new("Rig", arm_data)
@@ -383,7 +422,9 @@ def build_armature():
         return b
 
     head_h, head_t = (Vector(p) for p in L.head)
-    if BODY_INFO.get("placed"):
+    if BODY_INFO.get("placed") and CFG.get("mb_body"):
+        mb_body_bones(bone, head_h, head_t)
+    elif BODY_INFO.get("placed"):
         body_bones(bone, head_h, head_t)
     else:
         default_body_bones(bone, head_h, head_t)
@@ -650,11 +691,12 @@ def extend_rings(rings, top=0.0, bottom=0.0):
     return top_ext + rings + bot_ext
 
 
-def dome(rings, top=True, bottom=True, steps=5):
-    """Round off the ends: shrinking rings over a quarter circle."""
+def dome(rings, top=True, bottom=True, steps=5, bottom_h=1.0):
+    """Round off the ends: shrinking rings over a quarter circle. bottom_h
+    flattens the bottom cap (fraction of a full round cap)."""
     def cap(r, sign):
         z, cx, rx, cy, ry, band = r
-        h = min(rx, ry)
+        h = min(rx, ry) * (bottom_h if sign < 0 else 1.0)
         out = []
         for i in range(1, steps + 1):
             t = i / steps * math.pi / 2
@@ -714,26 +756,63 @@ def loft(name, rings, mats_by_band, default_mat, bone, flip=False, n=40, p=2.15)
     return ob
 
 
-def decal_rows(name, rows, mat, bone, off=0.005, flip=False, cols=10, step=2):
-    """Traced colour region (rows of z, x0, x1) projected onto the current surface."""
-    rows = sorted(rows, key=lambda r: -r[0])[::step]
+def decal_rows(name, rows, mat, bone, off=0.005, flip=False, cols=18, step=2, smooth=9):
+    """Traced colour region (rows of z, x0, x1) projected onto the current surface.
+
+    The traced row edges carry pixel noise, so x0/x1 are smoothed over
+    +-smooth rows first (no stair steps). Where the surface turns away from
+    the front ray, the row end slides inward to the last good hit instead of
+    dropping quads, and the decal sits `off` out along the surface normal.
+    """
+    rows = sorted(rows, key=lambda r: -r[0])
+    n = len(rows)
+    sm = []
+    for i, (z, _a, _b) in enumerate(rows):
+        k = min(smooth, i, n - 1 - i)        # narrower window at the ends keeps them round
+        lo, hi = i - k, i + k + 1
+        k = hi - lo
+        sm.append((z, sum(r[1] for r in rows[lo:hi]) / k, sum(r[2] for r in rows[lo:hi]) / k))
+    rows = sm[::step]
+    if rows[-1] is not sm[-1]:
+        rows.append(sm[-1])
     if len(rows) < 2:
         return None
+
+    def hit(x, z):
+        h, nrm, _i, _d = SURF["bvh"].ray_cast(Vector((x, -5.0, z)), Vector((0, 1, 0)))
+        if h is None or nrm.y > -0.35:      # missed, or the surface turns away
+            return None
+        return h, nrm
+
+    def hit_towards(x, xc, z):
+        """Surface hit at x, or the last good one moving from x towards xc."""
+        r = hit(x, z)
+        if r is not None:
+            return r
+        good = hit(xc, z)
+        if good is None:
+            return None
+        a, b = xc, x
+        for _ in range(12):
+            m = 0.5 * (a + b)
+            r = hit(m, z)
+            if r is not None:
+                a, good = m, r
+            else:
+                b = m
+        return good
+
     bm = bmesh.new()
     grid = []
     for z, x0, x1 in rows:
         if flip:
             x0, x1 = -x1, -x0
+        xc = 0.5 * (x0 + x1)
         row = []
         for i in range(cols + 1):
             x = x0 + (x1 - x0) * i / cols
-            try:
-                hit, nrm, _i, _d = SURF["bvh"].ray_cast(Vector((x, -5.0, z)), Vector((0, 1, 0)))
-                if hit is None or nrm.y > -0.35:      # missed, or the surface turns away
-                    raise RuntimeError
-                row.append(bm.verts.new(Vector((x, hit.y - off, z))))
-            except RuntimeError:
-                row.append(None)
+            r = hit_towards(x, xc, z)
+            row.append(bm.verts.new(r[0] + r[1] * off) if r else None)
         grid.append(row)
     for j in range(len(grid) - 1):
         for i in range(cols):
@@ -743,6 +822,7 @@ def decal_rows(name, rows, mat, bone, off=0.005, flip=False, cols=10, step=2):
     if not bm.faces:
         bm.free()
         return None
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
     bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
     if sum(f.normal.y for f in bm.faces) > 0:
         bmesh.ops.reverse_faces(bm, faces=bm.faces)
@@ -1353,6 +1433,105 @@ BODY = [
 ]
 
 
+# Miso's body: Sam's body (BODY) made chubby. Heights are remapped piecewise
+# (shorter legs, lower shoulders under the big head), torso and limbs get
+# thicker, arms move out to clear the wider torso; round paws and long feet.
+MISO_CHUB = dict(
+    zmap=((0.0, 0.0), (0.10, 0.10), (0.27, 0.22), (0.54, 0.36), (0.685, 0.52),
+          (0.83, 0.71), (0.95, 0.83), (1.17, 1.02)),
+    # pear shape: slim shoulders, chubby belly and hips (scale per spine bone)
+    torso={"Spine2": 0.88, "Spine1": 1.10, "Spine": 1.28, "Hips": 1.36},
+    limb=1.30, neck=1.25, arm_x=1.05, dy=0.025,
+    # wide, flattened neck (stacked ellipsoids, centre and half sizes) that
+    # tapers a little towards the head and flows into the sloped shoulders
+    # (the nape piece fills under the back of the head: no hollow or crease)
+    # neck: one thin tube (from, to, radius) from inside the shoulders up
+    # into the head
+    neck_flare=((0, -0.065, 0.740), (0, -0.060, 1.000), 0.135),
+    paw=(0.078, 0.082, 0.070), foot=((0.165, -0.055, 0.062), (0.120, 0.170, 0.065)))
+
+
+def chubby_body(src, C):
+    zm = C["zmap"]
+
+    def z_of(z):
+        for (z0, w0), (z1, w1) in zip(zm, zm[1:]):
+            if z <= z1:
+                return w0 + (w1 - w0) * (z - z0) / (z1 - z0)
+        return zm[-1][1] + (z - zm[-1][0])
+
+    def pt(p, xk=1.0):
+        if p is None:
+            return None
+        if p[0] == "s":
+            return ("s", p[1] * xk, p[2] + C["dy"], z_of(p[3]))
+        return (p[0] * xk, p[1] + C["dy"], z_of(p[2]))
+
+    out = []
+    for kind, a, b, size, bone in src:
+        arm = "Arm" in bone or "Hand" in bone
+        xk = C["arm_x"] if arm else 1.0
+        if bone.endswith("Hand"):
+            out.append(("E", pt(a, xk), None, C["paw"], bone))
+        elif bone.endswith("Foot"):
+            c, sz = C["foot"]
+            out.append(("E", ("s",) + c, None, sz, bone))
+        elif kind == "E":
+            k = C["torso"][bone]
+            out.append(("E", pt(a), None, (size[0] * k, size[1] * k, size[2] * k * 0.85), bone))
+        else:
+            k = C["neck"] if bone == "Neck" else C["limb"]
+            out.append(("C", pt(a, xk), pt(b, xk), size * k, bone))
+    if C.get("neck_flare"):
+        # slim neck that widens into the shoulders instead of a straight stump
+        out = [e for e in out if e[4] != "Neck"]
+        a, b, r = C["neck_flare"]
+        out.append(("C", a, b, r, "Neck"))
+    return out
+
+
+MISO_BODY = chubby_body(BODY, MISO_CHUB)
+MISO_SPINE = dict(y=-0.075, zs=(0.34, 0.45, 0.57, 0.715, 0.83))   # Sam's spine heights, remapped
+# cream paws and feet on Miso's body: arm below paw_z, leg below foot_z
+MISO_CREAM = dict(paw_up=0.000, foot_z=0.130)   # paw_up: cuff edge distance above the wrist, along the forearm
+
+
+def paint_cream(body, mats, rules):
+    """Cream paws and feet: cut the body along the band lines so the colour
+    edge is a clean ring, then give the paw / foot faces the cream material."""
+    nearest = BODY_INFO["nearest"]
+    me = body.data
+    me.materials.append(mats["cream"])
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    # paw cuts lie across each forearm (tilted with the arm), just above the wrist
+    cuts = {}
+    seg = {bn: (A, B) for A, B, bn, _s in BODY_INFO["placed"] if B is not None}
+    for side in ("Left", "Right"):
+        el, wr = seg[f"{side}ForeArm"]
+        n = (wr - el).normalized()
+        co = wr - n * rules["paw_up"]
+        cuts[side] = (co, n)
+        arm = {f"{side}ForeArm", f"{side}Hand"}
+        faces = [f for f in bm.faces if next(iter(nearest(f.calc_center_median()))) in arm]
+        verts = {v for f in faces for v in f.verts}
+        edges = {e for f in faces for e in f.edges}
+        bmesh.ops.bisect_plane(bm, geom=list(verts) + list(edges) + faces, plane_co=co, plane_no=n)
+    geom = bm.verts[:] + bm.edges[:] + bm.faces[:]
+    bmesh.ops.bisect_plane(bm, geom=geom, plane_co=(0, 0, rules["foot_z"]), plane_no=(0, 0, 1))
+    for f in bm.faces:
+        c = f.calc_center_median()
+        bn = next(iter(nearest(c)))
+        # colour edges follow the cut lines exactly
+        side = "Left" if bn.startswith("Left") else "Right"
+        paw = bn.endswith(("Hand", "ForeArm")) and (c - cuts[side][0]).dot(cuts[side][1]) > 0
+        foot = bn.endswith(("Foot", "Leg")) and c.z < rules["foot_z"]
+        f.material_index = 1 if (paw or foot) else 0
+    bm.to_mesh(me)
+    bm.free()
+    assign_weights(body, nearest)
+
+
 FINGER_BONES = []    # (name, head, tail, parent), added to the rig by build_armature
 HAND = dict(r=0.0140, len=0.056, spread=0.0275, fan=7.0, curl=0.010, thumb_r=0.0175, thumb_len=0.046)
 PALM = (0.446, -0.112, 0.602)
@@ -1420,7 +1599,7 @@ def build_fingers(mats):
     return out
 
 
-def build_body(mats, elems, name="Body", res=0.009, faces=26000):
+def build_body(mats, elems, name="Body", res=0.009, faces=26000, palm_frame=True, smooth=14, grow_m=0.004):
     """One smooth body from metaball capsules and ellipsoids (shoulders, hips
     and hands blend instead of meeting as separate tubes)."""
     mb = bpy.data.metaballs.new(name)
@@ -1446,7 +1625,7 @@ def build_body(mats, elems, name="Body", res=0.009, faces=26000):
                 e.co = A
                 e.radius = 1.0 / MB_K
                 e.size_x, e.size_y, e.size_z = size
-                if "Hand" in bone:          # palm: turned by the hand frame
+                if "Hand" in bone and palm_frame:     # palm: turned by the hand frame
                     a_, n_, b_ = hand_frame(s)
                     e.rotation = Matrix((b_, n_, a_)).transposed().to_quaternion()
                 else:
@@ -1470,10 +1649,10 @@ def build_body(mats, elems, name="Body", res=0.009, faces=26000):
     rm.mode, rm.voxel_size, rm.use_smooth_shade = "VOXEL", 0.011, True
     apply_mod(body, rm)
     sm = body.modifiers.new("smooth", "SMOOTH")
-    sm.iterations, sm.factor = 14, 0.5
+    sm.iterations, sm.factor = smooth, 0.5
     apply_mod(body, sm)
     grow = body.modifiers.new("grow", "DISPLACE")     # smoothing shrinks a little
-    grow.strength, grow.mid_level, grow.direction = 0.004, 0.0, "NORMAL"
+    grow.strength, grow.mid_level, grow.direction = grow_m, 0.0, "NORMAL"
     apply_mod(body, grow)
     for poly in body.data.polygons:
         poly.use_smooth = True
@@ -1946,6 +2125,13 @@ def build_traced(mats):
         v = vols[vname]
         mat_key, bone = cfg["parts"][vname]
         rows = v["rows"]
+        sb = cfg.get("smooth_back", {}).get(vname)
+        if sb:
+            # the side trace's back edge has a step: average it over +-sb rows
+            rows = sorted(rows, key=lambda r: -r[0])
+            ys = [r[4] for r in rows]
+            rows = [list(r[:4]) + [sum(ys[max(0, i - sb):i + sb + 1]) / len(ys[max(0, i - sb):i + sb + 1])]
+                    + list(r[5:]) for i, r in enumerate(rows)]
         zmin = cfg.get("min_z", {}).get(vname)
         if zmin is not None:
             rows = [r for r in rows if r[0] >= zmin]
@@ -1995,7 +2181,8 @@ def build_traced(mats):
         ext = cfg.get("extend", {}).get(vname)
         if ext:
             rings = extend_rings(rings, *ext)
-        rings = dome(rings, *cfg.get("dome", {}).get(vname, (True, True)))
+        rings = dome(rings, *cfg.get("dome", {}).get(vname, (True, True)),
+                     bottom_h=cfg.get("dome_bottom_h", {}).get(vname, 1.0))
         bands = {b: mats[b] for b in ("fur", "cream") if b in mats}
         bands.setdefault("fur", mats[mat_key])
         if v["mirror"]:
@@ -2013,10 +2200,24 @@ def build_traced(mats):
                 sculpt_nose(ob, cfg["nose_bump"])
             set_surface(ob)
 
+    if cfg.get("mb_body"):
+        # one metaball body instead of lofted torso / arms / legs; the
+        # torso's decals (belly) project onto it
+        body = build_body(mats, globals()[cfg["mb_body"]], palm_frame=False, smooth=32, grow_m=0.007)
+        paint_cream(body, mats, globals()[cfg["mb_cream"]])
+        objs["torso"] = body
+        parts.append(body)
+
     # Decals: traced colour regions projected onto their part
     for d in TRACE.get("decals", []):
         mat = mats[cfg["decal_mats"][d["name"]]]
         target = d["on"]
+        rows = d["rows"]
+        x0s = sorted(r[1] for r in rows); x1s = sorted(r[2] for r in rows)
+        if x0s[len(x0s) // 2] < -0.02 and x1s[len(x1s) // 2] > 0.02:
+            # a centre marking (muzzle, belly, forehead stripe): mirror it so
+            # both sides match
+            d = dict(d, rows=[(r[0], -0.5 * (r[2] - r[1]), 0.5 * (r[2] - r[1])) for r in rows])
         if target in objs:
             set_surface(objs[target])
             ob = decal_rows(d["name"], d["rows"], mat, cfg["parts"][target][1].format(side="", tag=""))
@@ -2210,6 +2411,56 @@ def build_painted_eye(tag, s, mats):
     return parts
 
 
+SNEER = dict(travel=0.024, margin=0.003, extra=0.0)
+
+
+def sneer_wrinkle(tag, s, mats):
+    """Sneer wrinkle: small bar hidden just behind the skin at rest. Where the
+    face curves away from the bar's centre, the whole bar moves back until
+    every point is `margin` behind the skin; the Sneer travel grows by the
+    same amount (SNEER["extra"]), so the full sneer looks the same."""
+    p0 = surf_point(0.04 * s, L.sneer_z, -0.016)
+    bm = sphere_bm(1.0, 16, 8)
+    for v in bm.verts:
+        v.co = Vector((v.co.x * 0.034, v.co.y * 0.012, v.co.z * 0.009))
+        v.co = Quaternion((0, 1, 0), math.radians(-25 * s)) @ v.co
+        v.co += p0
+    back = max(0.0, max(surf_y(v.co.x, v.co.z) + SNEER["margin"] - v.co.y for v in bm.verts))
+    for v in bm.verts:
+        v.co.y += back
+    SNEER["extra"] = max(SNEER["extra"], back)
+    wr = obj_from_bmesh(f"Wrinkle_{tag}", bm, mats["brow"])
+    assign_rigid(wr, "Sneer")
+    return wr
+
+
+def eye_cap_bm(ec, R, ax, az, cx=0.0, cz=0.0, seg=32, rings=6):
+    """Elliptic patch (half sizes ax, az seen from the front, centre offset
+    cx, cz) lying on the front of a sphere of radius R around ec."""
+    bm = bmesh.new()
+
+    def on_sphere(x, z):
+        y = -math.sqrt(max(R * R - x * x - z * z, 1e-8))
+        return bm.verts.new(ec + Vector((x, y, z)))
+
+    centre = on_sphere(cx, cz)
+    grid = []
+    for k in range(1, rings + 1):
+        rho = k / rings
+        grid.append([on_sphere(cx + ax * rho * math.cos(2 * math.pi * i / seg),
+                               cz + az * rho * math.sin(2 * math.pi * i / seg)) for i in range(seg)])
+    for i in range(seg):
+        bm.faces.new((centre, grid[0][i], grid[0][(i + 1) % seg]))
+    for a, b in zip(grid, grid[1:]):
+        for i in range(seg):
+            j = (i + 1) % seg
+            bm.faces.new((a[i], b[i], b[j], a[j]))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    if sum(f.normal.y for f in bm.faces) > 0:
+        bmesh.ops.reverse_faces(bm, faces=bm.faces)
+    return bm
+
+
 def build_face(mats):
     parts = []
     r = L.eye_r
@@ -2218,15 +2469,7 @@ def build_face(mats):
         if getattr(L, "painted_eyes", False):
             parts += build_painted_eye(tag, s, mats)
             parts.append(build_brow(tag, s, mats))
-            p0 = surf_point(0.04 * s, L.sneer_z, -0.016)
-            bm = sphere_bm(1.0, 16, 8)
-            for v in bm.verts:
-                v.co = Vector((v.co.x * 0.034, v.co.y * 0.012, v.co.z * 0.009))
-                v.co = Quaternion((0, 1, 0), math.radians(-25 * s)) @ v.co
-                v.co += p0
-            wr = obj_from_bmesh(f"Wrinkle_{tag}", bm, mats["brow"])
-            assign_rigid(wr, "Sneer")
-            parts.append(wr)
+            parts.append(sneer_wrinkle(tag, s, mats))
             continue
 
         bm = sphere_bm(r, 32, 16)
@@ -2235,22 +2478,20 @@ def build_face(mats):
         assign_rigid(eye, f"Eye_{tag}")
         parts.append(eye)
 
-        bm = sphere_bm(1.0, 24, 12)
+        # Iris, pupil and highlight are thin caps lying on the eyeball (each
+        # a hair further out), so they read as part of the eye from any angle.
         ik = getattr(L, 'iris_k', 1.0)
-        transform_bm(bm, scale=(0.61 * r * ik, 0.29 * r, 0.69 * r * ik), loc=ec + Vector((0, -r + 0.21 * r, 0)))
+        bm = eye_cap_bm(ec, r * 1.004, 0.61 * r * ik, 0.69 * r * ik)
         iris = obj_from_bmesh(f"Iris_{tag}", bm, mats["iris"])
         assign_rigid(iris, f"Eye_{tag}")
         parts.append(iris)
 
-        bm = sphere_bm(1.0, 24, 12)
-        transform_bm(bm, scale=(0.40 * r * ik, 0.29 * r, 0.46 * r * ik), loc=ec + Vector((0, -r + 0.16 * r, 0.02 * r)))
+        bm = eye_cap_bm(ec, r * 1.008, 0.40 * r * ik, 0.46 * r * ik, cz=0.02 * r)
         pupil = obj_from_bmesh(f"Pupil_{tag}", bm, mats["pupil"])
         assign_rigid(pupil, f"Eye_{tag}")
         parts.append(pupil)
 
-        bm = sphere_bm(1.0, 16, 8)
-        transform_bm(bm, scale=(0.18 * r, 0.1 * r, 0.18 * r),
-                     loc=ec + Vector((-0.21 * r * s, -r - 0.06 * r, 0.29 * r)))
+        bm = eye_cap_bm(ec, r * 1.013, 0.18 * r, 0.18 * r, cx=-0.21 * r * s, cz=0.29 * r)
         hl = obj_from_bmesh(f"Highlight_{tag}", bm, mats["highlight"])
         assign_rigid(hl, f"Eye_{tag}")
         parts.append(hl)
@@ -2274,15 +2515,7 @@ def build_face(mats):
         parts.append(build_brow(tag, s, mats))
 
         # Sneer wrinkle: small bar hidden inside the face at rest
-        p0 = surf_point(0.04 * s, L.sneer_z, -0.016)
-        bm = sphere_bm(1.0, 16, 8)
-        for v in bm.verts:
-            v.co = Vector((v.co.x * 0.034, v.co.y * 0.012, v.co.z * 0.009))
-            v.co = Quaternion((0, 1, 0), math.radians(-25 * s)) @ v.co
-            v.co += p0
-        wr = obj_from_bmesh(f"Wrinkle_{tag}", bm, mats["brow"])
-        assign_rigid(wr, "Sneer")
-        parts.append(wr)
+        parts.append(sneer_wrinkle(tag, s, mats))
 
     # Nose: small rounded nub, lifted by the sneer
     nx, ny, nz = L.nose_size
@@ -2447,10 +2680,20 @@ def feature_poses(arm):
                 f"LidUp_{tag}": {"loc": (0, 0, -A["lid_drop"] * a), "rot": ((0, 1, 0), -A["lid_tilt"] * s)},
             }
         else:
+            # scowl_k (per character) deepens the V: inner end further down
+            # and in, outer end stays put instead of dropping
+            k = getattr(L, "scowl_k", 1.0)
             f[f"browDown_{tag}"] = {
-                f"BrowInner_{tag}": brow(f"BrowInner_{tag}", -0.02 * s, -0.05),
-                f"BrowOuter_{tag}": brow(f"BrowOuter_{tag}", 0, -0.012),
+                f"BrowInner_{tag}": brow(f"BrowInner_{tag}", -0.02 * s * k, -0.05 * k),
+                f"BrowOuter_{tag}": brow(f"BrowOuter_{tag}", 0, -0.012 * (2 - k) if k < 2 else 0.0),
             }
+            sl = getattr(L, "scowl_lid", None)
+            if sl:
+                # like Sam's painted scowl: the upper lid shell closes part way
+                # and tilts down at the inner corner (one combined rotation)
+                close, tilt = sl
+                q = Quaternion((0, 1, 0), math.radians(-tilt * s)) @ Quaternion((1, 0, 0), math.radians(close))
+                f[f"browDown_{tag}"][f"LidUp_{tag}"] = {"rot": (tuple(q.axis), math.degrees(q.angle))}
         f[f"browOuterUp_{tag}"] = {f"BrowOuter_{tag}": brow(f"BrowOuter_{tag}", 0, 0.06)}
         if getattr(L, "painted_eyes", False):
             a = math.sqrt(max(L.eye_r ** 2 - L.eye_sink ** 2, 1e-6))
@@ -2461,9 +2704,22 @@ def feature_poses(arm):
             f[f"eyeBlink_{tag}"] = {f"LidUp_{tag}": {"rot": (X, L.lid_up_rest + 74)}}
             f[f"eyeWide_{tag}"] = {f"LidUp_{tag}": {"rot": (X, -(90 - L.lid_up_rest) - 4)}}
             f[f"eyeSquint_{tag}"] = {f"LidLow_{tag}": {"rot": (X, -68)}}
+            if getattr(L, "squint_lid_up", 0):
+                # squint narrows the eye from above too (like Sam's painted lids)
+                f[f"eyeSquint_{tag}"][f"LidUp_{tag}"] = {"rot": (X, L.squint_lid_up)}
         f[f"mouthSmile_{tag}"] = {f"MouthCorner_{tag}": mouth(f"MouthCorner_{tag}", 0.015 * s, 0.055)}
         f[f"mouthFrown_{tag}"] = {f"MouthCorner_{tag}": mouth(f"MouthCorner_{tag}", -0.005 * s, -0.05)}
-        f[f"mouthStretch_{tag}"] = {f"MouthCorner_{tag}": mouth(f"MouthCorner_{tag}", 0.04 * s, -0.02)}
+        # stretch (scared): corners out and down; per character, stretch_tail
+        # = (wider, lower) pulls the ends down into tails
+        sx, sz = getattr(L, "stretch_tail", (0.04, -0.02))
+        f[f"mouthStretch_{tag}"] = {f"MouthCorner_{tag}": mouth(f"MouthCorner_{tag}", sx * s, sz)}
+        ll = getattr(L, "stretch_lid_low", None)
+        if ll and not getattr(L, "painted_eyes", False):
+            # the stretched mouth pushes the cheeks up: lower lid rises from
+            # below, higher on the nose side (scared)
+            lift, tilt = ll
+            q = Quaternion((0, 1, 0), math.radians(tilt * s)) @ Quaternion((1, 0, 0), math.radians(-lift))
+            f[f"mouthStretch_{tag}"][f"LidLow_{tag}"] = {"rot": (tuple(q.axis), math.degrees(q.angle))}
 
     f["browInnerUp"] = {
         "BrowInner_L": brow("BrowInner_L", 0, 0.07),
@@ -2507,7 +2763,7 @@ def feature_poses(arm):
         "MouthCorner_R": mouth("MouthCorner_R", 0, 0.006),
     }
     f["noseSneer"] = {
-        "Sneer": {"loc": (0, -0.024, 0)},
+        "Sneer": {"loc": (0, -(SNEER["travel"] + SNEER["extra"]), 0)},
         "Nose": slide("Nose", 0, 0.016, 0.0),
         "LipUp": mouth("LipUp", 0, 0.015),
         "BrowInner_L": brow("BrowInner_L", -0.01, -0.015),

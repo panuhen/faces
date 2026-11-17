@@ -4,7 +4,8 @@
   "meta": {
     "about": "Script for the Face Feelings demo. See GAME_DESIGN.md section 'story.json format' for every field.",
     "placeholders": {
-      "{name}": "Character name chosen by the child: Pip, Miso or Sam.",
+      "{name}": "Character name chosen by the child: Miso or Sam.",
+      "{friend}": "The other character, who is {name}'s friend in the story: Sam when the child picked Miso, Miso when the child picked Sam. From characters[].friendId.",
       "{hand}": "Per-character word from characters[].words.hand (hand or paw).",
       "{word}": "Lower-case emotion word from emotions[id].word, e.g. 'sad'.",
       "{label}": "Card label from emotions[id].label, e.g. 'Sad'.",
@@ -18,9 +19,8 @@
   },
 
   "characters": [
-    { "id": "pip",  "name": "Pip",  "words": { "hand": "hand" }, "pickLine": "This is Pip." },
-    { "id": "miso", "name": "Miso", "words": { "hand": "paw"  }, "pickLine": "This is Miso." },
-    { "id": "sam",  "name": "Sam",  "words": { "hand": "hand" }, "pickLine": "This is Sam." }
+    { "id": "miso", "name": "Miso", "friendId": "sam",  "words": { "hand": "paw"  }, "pickLine": "This is Miso." },
+    { "id": "sam",  "name": "Sam",  "friendId": "miso", "words": { "hand": "hand" }, "pickLine": "This is Sam." }
   ],
 
   "emotionOrder": ["happy", "sad", "surprised", "angry", "scared", "disgusted"],
@@ -325,8 +325,8 @@
         "The milk is old. It smells very bad!"
       ],
       "comfort": [
-        "A grown-up pours the old milk away.",
-        "Here is fresh orange juice instead. It smells nice and sweet."
+        "{friend} pours the old milk away.",
+        "{friend} gives {name} fresh orange juice instead. It smells nice and sweet."
       ],
       "illustration": "Kitchen table with a bowl, a milk carton and a glass of milk. Two small wavy green smell lines rise from the glass. Simple cupboard and window behind.",
       "comfortIllustration": "Same table, a glass of orange juice in place of the milk.",
@@ -359,11 +359,11 @@
         "The red balloon floats up, up, up into the sky."
       ],
       "comfort": [
-        "A friend has two balloons.",
-        "The friend gives one to {name}. Now they each have a balloon."
+        "{friend} has two balloons.",
+        "{friend} gives one to {name}. Now they each have a balloon."
       ],
       "illustration": "Same park as the red balloon scene. The red balloon is high in the sky, small. A few leaves blow to show the wind.",
-      "comfortIllustration": "A friend (calm, kind face) holds out a yellow balloon to the character.",
+      "comfortIllustration": "The friend character (Sam or Miso, whichever the child did not pick; calm, kind face) holds out a yellow balloon to the character.",
       "sticker": { "id": "two_balloons", "label": "two balloons" }
     },
     {
@@ -390,15 +390,15 @@
       "followsId": "tall_tower",
       "text": [
         "{name} has a very tall tower of blocks.",
-        "Another child pushes the tower over, on purpose.",
+        "{friend} pushes the tower over, on purpose.",
         "Crash! All the blocks fall down."
       ],
       "comfort": [
-        "The other child comes back and says, 'I am sorry. That was not kind.'",
+        "{friend} comes back and says, 'I am sorry. That was not kind.'",
         "Then the two of them build the tower again, together."
       ],
-      "illustration": "Same playroom. Blocks scattered on the rug. The other child is seen from behind or the side, walking away; no mean face.",
-      "comfortIllustration": "Both children placing blocks on a new tower side by side, calm faces.",
+      "illustration": "Same playroom. Blocks scattered on the rug. The friend character is seen from behind or the side, walking away; no mean face.",
+      "comfortIllustration": "Miso and Sam placing blocks on a new tower side by side, calm faces.",
       "sticker": { "id": "two_hands_blocks", "label": "two friends building" }
     },
     {
@@ -412,11 +412,11 @@
         "Woof! Woof! The dog barks very loudly."
       ],
       "comfort": [
-        "The owner calls, 'Rufus, come here!'",
-        "The dog sits down and wags its tail. Rufus is a friendly dog."
+        "{friend} calls, 'Rufus, come here!'",
+        "The dog sits down next to {friend} and wags its tail. Rufus is {friend}'s dog, and he is friendly."
       ],
-      "illustration": "Same park, path in front. A big brown dog with an open mouth mid-bark, front paws on the ground (not jumping on the character). Owner far back with a leash.",
-      "comfortIllustration": "Dog sitting next to the owner, tail up, mouth closed or tongue out.",
+      "illustration": "Same park, path in front. A big brown dog with an open mouth mid-bark, front paws on the ground (not jumping on the character). The friend character far back with a leash, running to catch up.",
+      "comfortIllustration": "Dog sitting next to the friend character, tail up, mouth closed or tongue out.",
       "sticker": { "id": "dog_tail", "label": "a friendly dog" }
     },
     {
@@ -449,7 +449,7 @@
       ],
       "comfort": [
         "{name} puts the apple on the grass for the worm.",
-        "A grown-up gives {name} a banana instead. It is clean and sweet."
+        "{friend} gives {name} a banana instead. It is clean and sweet."
       ],
       "illustration": "Garden with grass, a picnic blanket, a fence and a flower bed. A green apple with a bite out of it and a small pink cartoon worm peeking out.",
       "comfortIllustration": "Apple on the grass with the worm; a yellow banana on the blanket.",
@@ -466,11 +466,11 @@
         "The cake slips. Splat! It falls on the floor."
       ],
       "comfort": [
-        "The baker comes over with a smile.",
-        "The baker gives {name} a cupcake with a cherry on top. 'Accidents happen,' says the baker."
+        "{friend} comes over with a smile.",
+        "{friend} shares a cupcake with a cherry on top. 'Accidents happen,' says {friend}."
       ],
       "illustration": "Bakery with a glass counter, a few cakes on shelves and a small round table. A chocolate cake upside down on the floor; no mess beyond one brown splat.",
-      "comfortIllustration": "Baker (calm, kind face) holding out a cupcake with a cherry.",
+      "comfortIllustration": "The friend character (calm, kind face) holding out a cupcake with a cherry.",
       "sticker": { "id": "cupcake", "label": "a cupcake with a cherry" }
     },
     {
@@ -484,11 +484,11 @@
         "There is a flash of lightning. Then, boom! The thunder is very loud."
       ],
       "comfort": [
-        "A grown-up sits next to {name} and holds {name}'s {hand}.",
+        "{friend} sits next to {name} and holds {name}'s {hand}.",
         "The two of them wait together until the storm is over. Then the sun comes out again."
       ],
       "illustration": "Same living room as the jack-in-the-box scene. Big window with a grey sky, rain and one lightning bolt. Show lightning as a soft glow, never a flashing screen.",
-      "comfortIllustration": "Same window, rainbow and sun. Grown-up and character on the sofa.",
+      "comfortIllustration": "Same window, rainbow and sun. Miso and Sam on the sofa together.",
       "sticker": { "id": "rainbow", "label": "a rainbow" }
     },
     {
@@ -500,10 +500,10 @@
       "finale": true,
       "text": [
         "Today is party day!",
-        "Ding dong! {name}'s friends are at the door. They brought cake and balloons!"
+        "Ding dong! {friend} is at the door, with cake and balloons!"
       ],
       "comfort": null,
-      "illustration": "Same garden as the picnic scene, now with bunting, a table with a cake and balloons. The friends are the two characters the child did not pick, plus the balloon friend, all waving with happy faces.",
+      "illustration": "Same garden as the picnic scene, now with bunting, a table with a cake and balloons. The friend character (Sam or Miso, whichever the child did not pick) at the door, both characters waving with happy faces.",
       "comfortIllustration": null,
       "sticker": { "id": "party_hat", "label": "a party hat" }
     }
@@ -534,7 +534,7 @@
       "place": "bakery",
       "emotion": "happy",
       "text": [
-        "At the bakery, the baker lets {name} put sprinkles on a big cake.",
+        "At the bakery, {name} and {friend} put sprinkles on a big cake.",
         "Lots and lots of sprinkles!"
       ],
       "comfort": null,
@@ -553,11 +553,11 @@
         "The car cannot roll any more."
       ],
       "comfort": [
-        "A grown-up helps fix the wheel with glue.",
+        "{friend} helps fix the wheel with glue.",
         "Tomorrow the car can roll again."
       ],
       "illustration": "Same bedroom. A small blue toy car on the floor, one wheel lying next to it.",
-      "comfortIllustration": "Grown-up's hands gluing the wheel back on; a glue tube on the floor.",
+      "comfortIllustration": "The friend character gluing the wheel back on; a glue tube on the floor.",
       "sticker": { "id": "toy_car", "label": "a blue toy car" }
     },
     {
@@ -623,7 +623,7 @@
         "{name} pulls and pulls. The zip stays stuck, again and again."
       ],
       "comfort": [
-        "A grown-up shows how to do it: hold the bottom, then pull slowly.",
+        "{friend} shows how to do it: hold the bottom, then pull slowly.",
         "Zip! The coat is closed. Off to the park!"
       ],
       "illustration": "Hallway with a front door, a coat hook and a shoe rack. The character wears an open coat; the zip is shown clearly.",
@@ -638,10 +638,10 @@
       "emotion": "angry",
       "text": [
         "{name} is drawing a big picture of a house.",
-        "A grown-up says, 'Stop now. It is time to go to the bakery.' The picture is not finished."
+        "{friend} says, 'Stop now. It is time to go to the bakery.' The picture is not finished."
       ],
       "comfort": [
-        "'You can finish it when we come home,' says the grown-up.",
+        "'You can finish it when we come home,' says {friend}.",
         "{name} puts the picture in a safe place on the shelf."
       ],
       "illustration": "Same playroom. A small table with crayons and a half-colored drawing of a house.",
@@ -659,7 +659,7 @@
         "Something moves in the corner. Rustle, rustle!"
       ],
       "comfort": [
-        "A grown-up opens the door wide, and the light comes in.",
+        "{friend} opens the door wide, and the light comes in.",
         "It is a little bird. The bird flies out into the garden."
       ],
       "illustration": "Inside a wooden shed, dim but not black: a watering can, a rake on the wall. A small dark shape in the corner. Keep it dim, never scary detail.",
@@ -677,11 +677,11 @@
         "A big wave rushes up the sand, very fast, right up to {name}!"
       ],
       "comfort": [
-        "A grown-up lifts {name} up high, and the wave slides back into the sea.",
-        "Now the two of them play further up on the dry sand."
+        "{friend} takes {name}'s {hand}, and they run up the sand together.",
+        "The wave slides back into the sea. Now the two of them play on the dry sand."
       ],
       "illustration": "Same beach. A big white-topped wave reaching up the sand towards the character. No deep water, no one in the water.",
-      "comfortIllustration": "Grown-up holding the character up, wave going back, calm sea.",
+      "comfortIllustration": "Miso and Sam hand in hand on dry sand, wave going back, calm sea.",
       "sticker": { "id": "seashell", "label": "a seashell" }
     },
     {
@@ -695,8 +695,8 @@
         "Underneath, the bread is green and fuzzy. It is moldy!"
       ],
       "comfort": [
-        "The baker puts the old roll in the bin.",
-        "Then the baker gives {name} a fresh, warm roll."
+        "{friend} puts the old roll in the bin.",
+        "Then {friend} gives {name} a fresh, warm roll."
       ],
       "illustration": "Same bakery. A bread roll turned over, with soft green fuzzy spots underneath.",
       "comfortIllustration": "A golden fresh roll in a paper bag.",

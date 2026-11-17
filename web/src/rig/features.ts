@@ -42,7 +42,7 @@ export const PRESETS: Record<Expression, Weights> = {
 }
 
 // Face style: how far the character's face goes from rest toward the preset.
-export const FACE_STYLES = { big: 1, medium: 0.7, subtle: 0.45 } as const
+export const FACE_STYLES = { big: 1, medium: 0.82, subtle: 0.65 } as const
 export type FaceStyle = keyof typeof FACE_STYLES
 
 export function scaled(w: Weights, k: number): Weights {
