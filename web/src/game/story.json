@@ -121,7 +121,8 @@
       "story": "Story",
       "mirror": "Mirror",
       "practice": "Practice",
-      "privacyShort": "Everything stays on this phone. No accounts. No recording. Nothing is uploaded."
+      "privacyShort": "Everything stays on this phone. No accounts. No recording. Nothing is uploaded.",
+    "credits": "Narrator voice made with ElevenLabs (elevenlabs.io)."
     },
 
     "characterPick": {

@@ -66,7 +66,7 @@ This writes `web/public/characters/<name>.glb`. Check the result in the gallery 
 
 ## Narrator voice
 
-Lines with a recording play as audio; any other line uses the phone's built-in voice. The recordings use the ElevenLabs voice "Jessica".
+Lines with a recording play as audio; any other line uses the phone's built-in voice. The recordings use the ElevenLabs voice "Jessica", made on the ElevenLabs free plan: non-commercial use only, with a credit to elevenlabs.io (shown on the home and settings screens).
 
 After changing text in `story.json`:
 
@@ -87,4 +87,14 @@ docker build -t faces .
 docker run -p 8080:80 faces
 ```
 
-Production runs on Coolify at `faces.rapu.ai` (Dockerfile build pack, branch `main`). Cloudflare provides HTTPS, which the camera needs.
+Live at https://faces.rapu.ai, on Coolify at `faces.rapu.ai` (Dockerfile build pack, branch `main`). Cloudflare provides HTTPS, which the camera needs.
+
+## License
+
+The code, characters, scene art and story text are under the [MIT License](LICENSE).
+
+Not covered by the MIT License:
+
+- **Narrator recordings** (`web/public/voice/*.mp3`): made with ElevenLabs on the free plan. They follow the ElevenLabs terms: non-commercial use only, with a credit to elevenlabs.io. For commercial use, record them again on a paid plan, or delete them; the game then uses the phone's built-in voice.
+- **MediaPipe** Face Landmarker model and runtime (`web/public/models/`, the `@mediapipe/tasks-vision` package): Apache License 2.0, by Google.
+

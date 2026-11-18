@@ -92,6 +92,10 @@ export function Settings({ onBack, onRecalibrate }: { onBack: () => void; onReca
             <p key={line}>{line}</p>
           ))}
         </section>
+        <section>
+          <h3>Credits</h3>
+          <p>{UI.home.credits}</p>
+        </section>
       </div>
     </div>
   )

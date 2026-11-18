@@ -48,7 +48,11 @@ export function Home({ onMode, onSettings }: { onMode: (m: Mode) => void; onSett
             {UI.home.practice}
           </button>
         </div>
-        <p className="privacy">{UI.home.privacyShort}</p>
+        <p className="privacy">
+          {UI.home.privacyShort}
+          <br />
+          {UI.home.credits}
+        </p>
       </div>
     </div>
   )
