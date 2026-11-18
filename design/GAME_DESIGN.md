@@ -128,14 +128,14 @@ Main scenes, in day order. The finale is always the last scene of a session.
 | 11 | A thunderstorm | living room | scared | the friend holds {name}'s {hand} until the sun comes out |
 | 12 | Party: the friend arrives with cake and balloons | garden | happy (finale) | |
 
-Twelve extra scenes (two per emotion) fill gaps when emotions are switched off: pancakes, sprinkles, broken toy car, sandcastle, popcorn, rabbit, stuck zip, drawing interrupted, dark shed, big wave, moldy roll, seaweed. They add two places, a hallway and a beach.
+Twelve extra scenes (two per emotion) give short and medium sessions variety: pancakes, sprinkles, broken toy car, sandcastle, popcorn, rabbit, stuck zip, drawing interrupted, dark shed, big wave, moldy roll, seaweed. They add two places, a hallway and a beach.
 
 ### How a session picks scenes
 
 Session lengths are short (4 scenes), medium (8) or full (12), always ending with the finale.
 
 - **Full**: every main scene whose emotion is on, in day order, topped up with extras if emotions are off.
-- **Short and medium**: walk the enabled emotions in introduction order, starting where the last session stopped, so repeated short sessions cover every emotion over time. Short sessions skip happy here, because the finale is happy. For each emotion, prefer a main scene that was not in the last session; use an extra only when no main scene fits. Medium sessions try to keep same-place pairs together (balloon 3 and 4, tower 5 and 6). The chosen scenes are sorted into day order.
+- **Short and medium**: walk the enabled emotions in introduction order, starting where the last session stopped, so repeated short sessions cover every emotion over time. Short sessions skip happy here, because the finale is happy. For each emotion, pick the scene, main or extra, that the child has gone longest without seeing (never-seen scenes first, ties at random). Every scene of an emotion comes round before one repeats; the game remembers the last 40 scenes played. Medium sessions try to keep same-place pairs together (balloon 3 and 4, tower 5 and 6). The chosen scenes are sorted into day order.
 - If happy is switched off, the finale is still played, as story and sticker only.
 - At least two emotions must be on, and the number of cards can't exceed the number of emotions on.
 
@@ -208,7 +208,6 @@ Not yet tested with children. The camera thresholds are first estimates.
 ## 12. Open questions
 
 - **Title.** "Face Feelings" is a working title.
-- **Extra scenes.** Only to fill gaps when emotions are off, or also now and then for variety on replays?
 - **The tower scene.** The friend knocks the tower over on purpose and says sorry. Is that right for the friend, or should the tower fall another way? Should the apology show the friend's face?
 - **Level 1 in Story mode.** Keep the scene pictures, or send level 1 to Practice?
 - **Startle scenes.** The dog, thunder, jack-in-the-box, wave and dark shed may be hard for sound-sensitive children even with soft sounds. Is switching Scared off enough, or should the settings warn about these scenes?

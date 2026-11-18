@@ -29,6 +29,7 @@ export interface Saved {
   stickers: { id: string; label: string }[]
   /** Where the session picker stopped in the emotion rotation. */
   rotation: number
+  /** Scenes played in short and medium sessions, newest first (the picker avoids repeats). */
   lastScenes: string[]
 }
 

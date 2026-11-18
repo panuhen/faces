@@ -4,10 +4,16 @@ import { store, type Settings } from './settings'
 
 const LENGTH = { short: 4, medium: 8, full: 12 } as const
 
+/** How many played scenes the picker remembers. */
+const HISTORY = 40
+
 /**
- * Picks the scenes of one story session (design B4). The finale is always last.
- * Short and medium sessions rotate through the emotions in introduction order,
- * continuing where the last session stopped.
+ * Picks the scenes of one story session (design section 7). The finale is always last.
+ * Full sessions play the main day. Short and medium sessions rotate through the
+ * emotions in introduction order, continuing where the last session stopped,
+ * and for each emotion pick the main or extra scene the child has gone longest
+ * without seeing (never-seen scenes first, ties at random). So replays bring
+ * new situations, and every scene of an emotion comes round before one repeats.
  */
 export function pickSession(settings: Settings): Scene[] {
   const on = new Set<Emotion>(settings.emotions)
@@ -22,7 +28,12 @@ export function pickSession(settings: Settings): Scene[] {
     for (const x of extras) if (chosen.length < k) chosen.push(x)
   } else {
     const saved = store.get()
-    const last = new Set(saved.lastScenes)
+    const history = saved.lastScenes
+    // how long ago a scene was played: never played counts as longest ago
+    const age = (s: Scene) => {
+      const at = history.indexOf(s.id)
+      return at < 0 ? Infinity : at
+    }
     let order = STORY.emotionOrder.filter((e) => on.has(e))
     // the finale already gives a happy scene in a short session
     if (settings.sessionLength === 'short' && order.length > 1) order = order.filter((e) => e !== 'happy')
@@ -30,16 +41,14 @@ export function pickSession(settings: Settings): Scene[] {
     let i = saved.rotation
     for (let guard = 0; chosen.length < k && guard < k * 4; guard++, i++) {
       const emotion = order[i % order.length]
-      const free = (s: Scene) => s.emotion === emotion && !chosen.includes(s)
-      const scene =
-        main.find((s) => free(s) && !last.has(s.id)) ??
-        main.find(free) ??
-        extras.find((s) => free(s) && !last.has(s.id)) ??
-        extras.find(free)
-      if (scene) chosen.push(scene)
+      const options = shuffle([...main, ...extras].filter((s) => s.emotion === emotion && !chosen.includes(s)))
+      if (!options.length) continue
+      const oldest = Math.max(...options.map(age))
+      chosen.push(options.find((s) => age(s) === oldest)!)
     }
     if (settings.sessionLength === 'medium') keepPairs(chosen, main)
-    store.set({ rotation: i % order.length, lastScenes: chosen.map((s) => s.id) })
+    const played = chosen.map((s) => s.id)
+    store.set({ rotation: i % order.length, lastScenes: [...played, ...history.filter((id) => !played.includes(id))].slice(0, HISTORY) })
   }
   chosen.sort((a, b) => a.order - b.order)
   return [...chosen, finale]
