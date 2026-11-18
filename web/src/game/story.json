@@ -122,7 +122,10 @@
       "mirror": "Mirror",
       "practice": "Practice",
       "privacyShort": "Everything stays on this phone. No accounts. No recording. Nothing is uploaded.",
-    "credits": "Narrator voice made with ElevenLabs (elevenlabs.io)."
+    "credits": "Narrator voice made with ElevenLabs (elevenlabs.io).",
+    "openSource": "Open source, MIT License.",
+    "sourceLink": "Source code",
+    "repoUrl": "https://github.com/panuhen/faces"
     },
 
     "characterPick": {

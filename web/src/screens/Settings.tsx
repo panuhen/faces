@@ -95,6 +95,12 @@ export function Settings({ onBack, onRecalibrate }: { onBack: () => void; onReca
         <section>
           <h3>Credits</h3>
           <p>{UI.home.credits}</p>
+          <p>
+            {UI.home.openSource}{' '}
+            <a href={UI.home.repoUrl} target="_blank" rel="noopener noreferrer">
+              {UI.home.repoUrl}
+            </a>
+          </p>
         </section>
       </div>
     </div>

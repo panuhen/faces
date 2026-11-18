@@ -11,6 +11,7 @@ import { Home, type Mode } from './screens/Home'
 import { Mirror } from './screens/Mirror'
 import { Pick } from './screens/Pick'
 import { Practice } from './screens/Practice'
+import { OgCard } from './screens/OgCard'
 import { ScenePreview } from './screens/ScenePreview'
 import { Settings } from './screens/Settings'
 import { Story } from './screens/Story'
@@ -92,6 +93,7 @@ export function App() {
   if (c) return <Gallery character={c} />
   if (params.has('compare')) return <Compare />
   if (params.has('scene')) return <ScenePreview />
+  if (params.has('og')) return <OgCard />
   return (
     <div className="app">
       <Game />
