@@ -40,6 +40,7 @@ Grown-up settings open with a 3-second press on the gear icon on the home screen
 
 | Path | What is there |
 |---|---|
+| `research/` | Background research: face-tracking libraries, and earlier games and studies for children with special needs. |
 | `design/GAME_DESIGN.md` | The game design. Part A is decided by the owner, Part B is proposals, Part C open questions. |
 | `web/src/game/story.json` | All story text, UI copy, emotions, hints and settings. `design/story.json` links to it. |
 | `web/src/game/` | Story data, settings and saved data, session scene picker, read-aloud. |
