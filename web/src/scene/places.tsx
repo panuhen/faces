@@ -2,6 +2,7 @@ import type { ComponentType } from 'react'
 import { INK, Layer, LINE, Sky, THIN, Tuft, type TimeOfDay } from './art'
 import { GROUND } from './coords'
 import { ParkBack, ParkFront, PARK_SOLO_X } from './Park'
+import { Furniture, WindowView } from './rooms'
 
 export interface PlaceProps {
   time: TimeOfDay
@@ -31,19 +32,23 @@ const ROOMS: Record<string, { wall: string; floor: string; rug: string }> = {
 
 function Room({ place }: { place: string }) {
   const c = ROOMS[place] ?? ROOMS.living_room
-  function Back({ time }: PlaceProps) {
+  function Back(p: PlaceProps) {
     return (
       <>
         <Layer par={0.1}>
-          <Sky time={time} id={`${place}-sky`} />
+          <Sky time={p.time} id={`${place}-sky`} />
         </Layer>
         <Layer par={0.6} enter={40}>
+          <WindowView {...p} />
           {/* wall with a window cut out, so the sky layer shows through */}
           <path fillRule="evenodd" d="M -400 -400 H 1600 V 800 H -400 Z M 700 200 H 1000 V 520 H 700 Z" fill={c.wall} />
           <rect x="700" y="200" width="300" height="320" rx="6" fill="none" {...LINE} strokeWidth={14} stroke="#fbf6ee" />
           <rect x="693" y="193" width="314" height="334" rx="10" fill="none" {...THIN} />
           <path d="M 850 200 V 520 M 700 360 H 1000" stroke="#fbf6ee" strokeWidth={10} />
           <path d="M 680 530 H 1020" stroke={INK} strokeWidth={12} strokeLinecap="round" />
+        </Layer>
+        <Layer par={1} enter={80}>
+          <Furniture place={place} />
         </Layer>
         <Layer par={1} enter={80}>
           <path d="M -400 790 H 1600 V 1500 H -400 Z" fill={c.floor} {...LINE} />
@@ -72,6 +77,9 @@ function Outdoor({ place }: { place: string }) {
         </Layer>
         <Layer par={0.35} enter={30}>
           <path d="M -400 700 Q 200 640 700 690 T 1600 680 V 1400 H -400 Z" fill={c.far} {...THIN} />
+        </Layer>
+        <Layer par={0.7} enter={50}>
+          <Furniture place={place} />
         </Layer>
         <Layer par={1} enter={80}>
           <path d="M -400 806 Q 600 776 1600 806 V 1500 H -400 Z" fill={c.ground} {...LINE} />

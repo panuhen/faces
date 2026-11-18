@@ -51,8 +51,6 @@ export function Home({ onMode, onSettings }: { onMode: (m: Mode) => void; onSett
         <p className="privacy">
           {UI.home.privacyShort}
           <br />
-          {UI.home.credits}
-          <br />
           {UI.home.openSource}{' '}
           <a href={UI.home.repoUrl} target="_blank" rel="noopener noreferrer">
             {UI.home.sourceLink}

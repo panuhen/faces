@@ -92,8 +92,30 @@ button { font: inherit; color: inherit; }
 .pop-in { animation: pop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both; transform-box: fill-box; transform-origin: center; }
 @keyframes pop { from { opacity: 0; scale: 0.4; } }
 
+.snow { animation: snow 3s linear infinite; }
+@keyframes snow { from { transform: translate(0, 0); } to { transform: translate(-14px, 340px); } }
+.rain { animation: rain 0.8s linear infinite; }
+@keyframes rain { from { transform: translate(0, 0); } to { transform: translate(-40px, 360px); } }
+.glow { animation: glow 5s ease-in-out infinite; }
+@keyframes glow { 0%, 60%, 100% { opacity: 0.15; } 75% { opacity: 1; } }
+.smell { animation: smell 2.2s ease-in-out infinite; }
+@keyframes smell { 0% { opacity: 0; transform: translateY(10px); } 30% { opacity: 1; } 100% { opacity: 0; transform: translateY(-30px); } }
+.notes > g { animation: notes 1.6s ease-out infinite; }
+@keyframes notes { from { opacity: 0; transform: translateY(20px); } 40% { opacity: 1; } to { opacity: 0; transform: translateY(-40px); } }
+.crank { animation: crank 1.2s linear infinite; }
+@keyframes crank { to { transform: rotate(360deg); } }
+.spring-up { animation: spring-up 0.7s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+@keyframes spring-up { from { transform: translateY(170px) scaleY(0.4); } }
+.worm { animation: worm 1.4s ease-in-out infinite alternate; }
+@keyframes worm { from { transform: translate(-6px, 4px); } to { transform: translate(4px, -2px); } }
+.sway { animation: sway 4s ease-in-out infinite alternate; }
+@keyframes sway { from { transform: translateY(-3px); } to { transform: translateY(4px); } }
+.flame { animation: flame 0.6s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: bottom; }
+@keyframes flame { from { transform: scaleY(0.85); } to { transform: scaleY(1.1); } }
+
 @media (prefers-reduced-motion: reduce) {
   .layer svg { animation: none; }
+  .snow, .rain, .glow, .smell, .notes > g, .crank, .spring-up, .worm, .sway, .flame { animation: none; }
   .run-in, .dog-tail, .bark, .sit-in, .block-in, .splat, .pop-in { animation: none; }
   .bob, .drift, .leaf, .float-away { animation: none; }
   .give { transition: none; }
