@@ -1,4 +1,4 @@
-// Pip stays as a model file for the dev gallery (?c=pip) but is not in the game.
+// The two playable characters. (The build script can also make an older test character, pip, viewable in the dev gallery as ?c=pip.)
 export const CHARACTERS = ['miso', 'sam'] as const
 export type CharacterId = (typeof CHARACTERS)[number]
 

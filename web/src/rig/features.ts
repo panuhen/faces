@@ -14,7 +14,7 @@ export const FEATURES = [
   'mouthPucker', 'mouthPress', 'mouthUpperUp', 'noseSneer',
 ] as const
 
-// Extra clips for the character's accent part (Pip's sprout, later Miso's ears).
+// Extra clips for a character's accent part (for example ears); unused by the current characters.
 export const ACCENTS = ['accentDroop', 'accentPerk'] as const
 
 export type Feature = (typeof FEATURES)[number] | (typeof ACCENTS)[number]

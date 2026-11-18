@@ -41,7 +41,7 @@ Grown-up settings open with a 3-second press on the gear icon on the home screen
 | Path | What is there |
 |---|---|
 | `research/` | Background research: face-tracking libraries, and earlier games and studies for children with special needs. |
-| `design/GAME_DESIGN.md` | The game design. Part A is decided by the owner, Part B is proposals, Part C open questions. |
+| `design/GAME_DESIGN.md` | The game design: principles, game flow, scenes, settings, status and open questions. |
 | `web/src/game/story.json` | All story text, UI copy, emotions, hints and settings. `design/story.json` links to it. |
 | `web/src/game/` | Story data, settings and saved data, session scene picker, read-aloud. |
 | `web/src/face/` | Camera and MediaPipe tracking, face scoring against the calm baseline, mirror mapping. |
@@ -54,7 +54,6 @@ Grown-up settings open with a 3-second press on the gear icon on the home screen
 | `web/public/models/` | MediaPipe Face Landmarker model. |
 | `blender/build_character.py` | Builds the characters from code. |
 | `blender/traces/` | Character outlines traced from the concept sheets, used by the build. The concept sheets themselves are not in the repo, so `blender/trace_sketch.py` only runs where they exist. |
-| `codex/` | Task notes for Codex runs. |
 
 ## Characters
 

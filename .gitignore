@@ -7,5 +7,6 @@ review/
 concepts/
 backups/
 *.blend1
-codex/*.log
+codex/
+*.tsbuildinfo
 .~lock.*#
