@@ -74,8 +74,31 @@ for (const e of emotions) all([e.label, ...e.hint, ...e.coach.map((c) => c.text)
 section('Sticker names (spoken when a sticker is tapped)')
 all(scenes.map((s) => s.sticker.label), shared)
 
+// Game lines spoken in Story, Mirror and Practice. The ones without a name in
+// them are the same for both characters and go to the shared section.
+const gameLines = [
+  ...ui.calibration.prompt,
+  ...ui.intro,
+  ...ui.outro,
+  ui.guess.prompt,
+  ...ui.guess.celebrate,
+  ...ui.guess.lookCloser.open,
+  ui.guess.lookCloser.reveal,
+  ui.guess.lookCloser.found,
+  ...ui.make.meterTiers.flatMap((t) => t.lines),
+  ...ui.make.success,
+  ui.make.noCamera.prompt,
+  ui.level1.show,
+  ui.level1.reset,
+  ui.mirror.intro,
+  ...emotions.map((e) => e.makePrompt),
+]
+const hasName = (l) => /\{(name|friend|hand)\}/.test(l)
+section('Shared game lines')
+all(gameLines.filter((l) => !hasName(l)), shared)
+
 for (const hero of story.characters) {
-  const named = (list) => list.filter((l) => /\{(name|friend|hand)\}/.test(l))
+  const named = (list) => list.filter(hasName)
   section(`${hero.name}: game lines`)
   all(
     named([

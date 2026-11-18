@@ -1,6 +1,6 @@
 # Face Feelings: voice lines
 
-403 different lines. Made by `web/scripts/voice-lines.mjs` from `story.json`; do not edit by hand.
+404 different lines. Made by `web/scripts/voice-lines.mjs` from `story.json`; do not edit by hand.
 Record each line once. Name the file by its id (for example `e19924e039.mp3`).
 
 ## Shared lines (same for both characters)
@@ -148,6 +148,27 @@ Record each line once. Name the file by its id (for example `e19924e039.mp3`).
 | `9afbe05b0c` | a seashell |
 | `16af815eac` | a warm bread roll |
 | `df95040985` | a starfish |
+
+## Shared game lines
+
+| id | line |
+|---|---|
+| `c5c7816c4c` | Show me your calm face. |
+| `5d911c93a9` | Now the sun goes down. It is time for bed. |
+| `1602a9b306` | Look at all your stickers! |
+| `e76654f5b6` | Let's look closer. |
+| `7eb4e8f533` | Getting closer! |
+| `c59e61a8f3` | That's a good start! |
+| `74c7770461` | Almost there! |
+| `f745998408` | Very close now! |
+| `a3aef317f2` | That's it! Hold it. |
+| `b39f43c3f5` | Yes! Keep it still. |
+| `191afc47aa` | You made the happy face! |
+| `f5320b830e` | You made the sad face! |
+| `3d3183fe67` | You made the surprised face! |
+| `c3cf5217d0` | You made the angry face! |
+| `f8850b012b` | You made the scared face! |
+| `ddffffd0af` | You made the disgusted face! |
 
 ## Miso: game lines
 
