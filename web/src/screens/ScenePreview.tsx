@@ -24,6 +24,7 @@ export function ScenePreview() {
           shot={shot}
           heroFace={scaled(PRESETS[face] ?? {}, FACE_STYLES.big)}
           friendFace={scaled(PRESETS.happy, 0.5)}
+          beat={Number(q.get('beat') ?? 9)}
         />
         <div className="panel" />
       </div>

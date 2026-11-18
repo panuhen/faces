@@ -191,13 +191,14 @@ Built and playable at https://faces.rapu.ai:
 - all screens and the full scene loop, levels 1 to 4, settings, calibration, Mirror and Practice
 - face tracking and scoring on the device
 - both characters with six expressions at three strengths
-- the park, with its props and animations for the balloon scenes
+- the park, with its props and animations for the balloon scenes and Rufus the dog
+- story props that move with the narration for the block tower and the dropped cake (in simple stand-in rooms)
 - recorded narration for every line
 
 Not built yet:
 
 - pictures for the other places (bedroom, kitchen, playroom, living room, garden, bakery, hallway, beach): these show simple stand-in rooms and fields
-- scene props for scenes outside the park (dog, blocks, cake and so on)
+- props for the other scenes (milk, apple and worm, jack-in-the-box, thunderstorm, party and the extras)
 - story sound effects (bark, thunder, pop); the setting only affects the tap and chime for now
 - speaking a card's label when it is tapped, and the "a little more light" hint
 - level 5, real human faces

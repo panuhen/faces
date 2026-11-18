@@ -77,8 +77,24 @@ button { font: inherit; color: inherit; }
 .drift { animation: drift 90s linear infinite alternate; }
 @keyframes drift { from { transform: translateX(-40px); } to { transform: translateX(60px); } }
 
+/* story props */
+.run-in { animation: run-in 1.3s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+@keyframes run-in { from { transform: translateX(900px); } }
+.dog-tail { animation: wag 0.5s ease-in-out infinite alternate; transform-box: view-box; }
+.dog-tail.wag { animation-duration: 0.28s; }
+@keyframes wag { from { transform: rotate(-12deg); } to { transform: rotate(14deg); } }
+.bark { animation: bark 0.9s ease-out 2 both; }
+@keyframes bark { from { opacity: 0; transform: translateX(30px); } 40% { opacity: 1; } to { opacity: 0; transform: translateX(-30px); } }
+.sit-in { animation: pop 0.5s ease-out both; }
+.block-in { animation: block-in 0.35s cubic-bezier(0.3, 1.4, 0.5, 1) both; }
+@keyframes block-in { from { opacity: 0; translate: 0 -60px; } }
+.splat { animation: pop 0.3s ease-out 0.45s both; transform-box: fill-box; transform-origin: center; }
+.pop-in { animation: pop 0.5s cubic-bezier(0.3, 1.5, 0.5, 1) both; transform-box: fill-box; transform-origin: center; }
+@keyframes pop { from { opacity: 0; scale: 0.4; } }
+
 @media (prefers-reduced-motion: reduce) {
   .layer svg { animation: none; }
+  .run-in, .dog-tail, .bark, .sit-in, .block-in, .splat, .pop-in { animation: none; }
   .bob, .drift, .leaf, .float-away { animation: none; }
   .give { transition: none; }
 }

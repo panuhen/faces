@@ -9,6 +9,8 @@ export interface PlaceProps {
   moment: 'event' | 'comfort'
   /** Where the main character stands when alone (metres). */
   soloX: number
+  /** Index of the story or comfort line being read (props move on it). */
+  beat: number
 }
 
 interface Place {

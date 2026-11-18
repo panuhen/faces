@@ -63,6 +63,7 @@ export function Story({ hero, onEnd, onHome }: { hero: CharacterId; onEnd: () =>
   const [pointer, setPointer] = useState<Part | null>(null)
   const [friendIn, setFriendIn] = useState(false)
   const [smiling, setSmiling] = useState(false)
+  const [beat, setBeat] = useState(0) // which story or comfort line is being read
   const result = useRef<MakeResult>('made')
   const stuck = useRef(new Set<string>()) // scenes whose sticker is already in the book
 
@@ -107,7 +108,10 @@ export function Story({ hero, onEnd, onHome }: { hero: CharacterId; onEnd: () =>
             break
           }
           await s.pause(telling ? 0 : 700)
-          for (const line of scene.text) await tell(line)
+          for (let i = 0; i < scene.text.length; i++) {
+            setBeat(i)
+            await tell(scene.text[i])
+          }
           if (emotion === 'happy' && happyOff) {
             // happy is switched off: the finale is told, with no task
             setPhase('sticker')
@@ -163,6 +167,7 @@ export function Story({ hero, onEnd, onHome }: { hero: CharacterId; onEnd: () =>
           } else {
             const lines = scene.comfort
             for (let i = 0; i < lines.length; i++) {
+              setBeat(i)
               if (i === lines.length - 1) setSmiling(true)
               await tell(lines[i])
             }
@@ -223,7 +228,7 @@ export function Story({ hero, onEnd, onHome }: { hero: CharacterId; onEnd: () =>
   const showCards = phase === 'guess' || phase === 'right' || phase === 'closer' || phase === 'find' || phase === 'found'
   return (
     <div className="screen">
-      <SceneView hero={hero} place={scene.place} time={scene.timeOfDay} sceneId={phase === 'intro' || phase === 'outro' ? phase : scene.id} moment={moment} shot={shot} heroFace={heroFace} friendFace={friendFace}>
+      <SceneView hero={hero} place={scene.place} time={scene.timeOfDay} sceneId={phase === 'intro' || phase === 'outro' ? phase : scene.id} moment={moment} beat={beat} shot={shot} heroFace={heroFace} friendFace={friendFace}>
         {pointer && <span className={`pointer at-${pointer} ${hero}`} />}
         {phase === 'make' && settings.cameraPreview && <CameraPreview />}
         <button className="corner" aria-label={UI.sticker.home} onClick={onHome}>
