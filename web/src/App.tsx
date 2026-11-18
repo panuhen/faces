@@ -12,6 +12,7 @@ import { Mirror } from './screens/Mirror'
 import { Pick } from './screens/Pick'
 import { Practice } from './screens/Practice'
 import { OgCard } from './screens/OgCard'
+import { SceneList } from './screens/SceneList'
 import { ScenePreview } from './screens/ScenePreview'
 import { Settings } from './screens/Settings'
 import { Story } from './screens/Story'
@@ -94,6 +95,7 @@ export function App() {
   if (params.has('compare')) return <Compare />
   if (params.has('scene')) return <ScenePreview />
   if (params.has('og')) return <OgCard />
+  if (params.has('allscenes')) return <SceneList />
   return (
     <div className="app">
       <Game />

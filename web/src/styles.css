@@ -284,3 +284,9 @@ button:focus-visible { outline: 4px solid #3a7bd5; outline-offset: 3px; }
 .og-band p { margin: 0; font-size: 32px; font-weight: 700; line-height: 1.25; opacity: 0.8; }
 .og-picture { flex: 1; position: relative; display: flex; }
 .og-picture .picture { flex: 1; }
+
+/* dev view ?allscenes */
+.scene-list { padding: 16px; max-width: 760px; margin: 0 auto; }
+.scene-list table { border-collapse: collapse; width: 100%; }
+.scene-list td { padding: 6px 10px; border-bottom: 1px solid #2b1d2422; }
+.scene-list a { color: inherit; font-weight: 700; }
