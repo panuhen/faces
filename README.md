@@ -53,7 +53,8 @@ Grown-up settings open with a 3-second press on the gear icon on the home screen
 | `web/public/voice/` | Recorded narrator lines (MP3) and `index.json` (text to file). |
 | `web/public/models/` | MediaPipe Face Landmarker model. |
 | `blender/build_character.py` | Builds the characters from code. |
-| `concepts/`, `review/`, `codex/` | Concept art, review renders, and task notes for Codex runs. |
+| `blender/traces/` | Character outlines traced from the concept sheets, used by the build. The concept sheets themselves are not in the repo, so `blender/trace_sketch.py` only runs where they exist. |
+| `codex/` | Task notes for Codex runs. |
 
 ## Characters
 

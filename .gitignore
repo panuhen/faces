@@ -2,9 +2,9 @@ node_modules
 dist
 blender/out
 web/public/mediapipe
-# review renders are throwaway; keep only the reference images
-review/*
-!review/ref_*.png
+# review renders and concept art stay local
+review/
+concepts/
 backups/
 *.blend1
 codex/*.log
